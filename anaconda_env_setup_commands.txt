@@ -1,0 +1,37 @@
+## In the base environment
+# Update conda
+conda update -n base -c defaults conda
+
+# Create new environment replace "ctd_env312" with a name of your choice and choose the version of Python (e.g. 3.12 in this example)
+conda create -n ctd_env312 python=3.12
+
+## Change into the new environment using the name assigned above
+
+conda activate ctd_env312
+
+# Install Jupyter and ipykernel
+
+# conda install -c anaconda jupyter # maybe doesn't need to be installed if the base environment has Jupyter running
+
+conda install -c anaconda ipykernel
+
+## Define this environment as a named ipykernel to be available to Jupyter notebooks
+
+python -m ipykernel install --user --name=ctd_env312_notebooks
+
+## Install packages used by the CTD processing notebook
+
+conda install -c conda-forge chevron=0.14.0
+conda install -c conda-forge numpy=1.26.4
+conda install -c conda-forge pandas=2.2.2
+conda install -c conda-forge pyodbc=5.0.1
+conda install -c conda-forge seawater=3.3.5
+conda install -c conda-forge bokeh=3.5.1
+conda install -c conda-forge xlrd=2.0.1
+conda install -c conda-forge ipywidgets=7.8.1
+conda install -c conda-forge widgetsnbextension=3.6.1
+conda install -c conda-forge jupyterlab_widgets
+
+
+Debugger warning: It seems that frozen modules are being used, which may make the debugger miss breakpoints. Please pass -Xfrozen_modules=off to python to disable frozen modules.
+

@@ -1,0 +1,1 @@
+This folder contains the scripts which are called by the CTD Data Processing Jupyter Notebook.
