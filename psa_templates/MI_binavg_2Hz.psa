@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bin_Average >
+  <Version value="7.26.7.114" />
+  <ServerName value="Bin Average" />
+  <InputDir value="C:\Users\rthomas\Documents\Cruise_2019\CTD_processing\cruise_data\CE18001\output\screen_2Hz" />
+  <InputFileArray size="11" GrowBy="-1" >
+    <ArrayItem index="0" value="CE18001_001.cnv" />
+    <ArrayItem index="1" value="CE18001_002.cnv" />
+    <ArrayItem index="2" value="CE18001_003.cnv" />
+    <ArrayItem index="3" value="CE18001_004.cnv" />
+    <ArrayItem index="4" value="CE18001_005.cnv" />
+    <ArrayItem index="5" value="CE18001_006.cnv" />
+    <ArrayItem index="6" value="CE18001_007.cnv" />
+    <ArrayItem index="7" value="CE18001_008.cnv" />
+    <ArrayItem index="8" value="CE18001_009.cnv" />
+    <ArrayItem index="9" value="CE18001_010.cnv" />
+    <ArrayItem index="10" value="CE18001_gbo.cnv" />
+  </InputFileArray>
+  <OutputDir value="C:\Users\rthomas\Documents\Cruise_2019\CTD_processing\cruise_data\CE18001\output\screen_2Hz" />
+  <NameAppend value="" />
+  <OutputFile value="" />
+  <LastProcessed value="0" />
+  <BinType value="4" />
+  <BinSize value="0.500000" />
+  <IncludeNumberScans value="0" />
+  <ExcludeMarkedBad value="1" />
+  <ScansToSkip value="0" />
+  <ScansToOmit value="0" />
+  <MinScansPerBin value="1" />
+  <MaxScansPerBin value="2147483647" />
+  <CastToProcess value="0" high="2" low="0" initialValue="0" />
+  <IncludeSurfaceBin value="0" />
+  <SurfaceBinMinVal value="0.000000" />
+  <SurfaceBinMaxVal value="0.000000" />
+  <SurfaceBinVal value="0.000000" />
+</Bin_Average>
