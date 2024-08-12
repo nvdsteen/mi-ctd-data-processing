@@ -211,7 +211,7 @@ def create_ctd_events(cruiseID,
     for item in ['Lat','Long','Upload Time','UTC Time']:
         if df_missingNMEA[item]!=0:
             counts = df_missingNMEA[item]
-            print("ACTION *** %s missing in %s HDR files *** Ensure %s entered into logsheet from paper logs for:" % (item, counts, tem))
+            print("ACTION *** %s missing in %s HDR files *** Ensure %s entered into logsheet from paper logs for:" % (item, counts, item))
             print(df_NMEA[df_NMEA[item].isnull()]['CTD number'].tolist())
         else:
             print("\t%s present in all HDR files" % (item))
