@@ -67,7 +67,8 @@ def get_NMEA_from_header(directory, fileformat):
     Parameters: 
         directory: str
         fileformat: str
-
+    Output:
+        pd.DataFrame
     '''
     
     # Get CNV filenames
