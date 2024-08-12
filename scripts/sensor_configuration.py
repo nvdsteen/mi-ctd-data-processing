@@ -81,7 +81,7 @@ def file_sensor_config(directory, file):
         attached to each voltage channel
     """
     
-    config_xml = elementTree.parse(os.path.join(directory,file.upper().replace('.CNV','.XMLCON')))
+    config_xml = elementTree.parse(os.path.join(directory,file.upper().replace('.CNV','.XMLCON').replace('.BTL','.XMLCON')))
     config = config_xml.getroot()
     
     # Initialise dictionary to use to store sensor information

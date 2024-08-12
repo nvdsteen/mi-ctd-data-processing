@@ -98,9 +98,9 @@ class bokeh_layout:
             update_button_attr(self.next_profile, False,'primary')
             update_button_attr(self.prev_profile, False,'primary')
             
-    # def screen_html(self):
-    #     output_file(os.path.join(plots,"%s_plots.html" % self.profile.value))
-    #     save(layout)
+    def screen_html(self):
+        output_file(os.path.join(self.output_path, 'plots',"%s_plots.html" % self.profile.value))
+        save(self.visualisation_layout)
         
     def surface_soak(self):
         # Define surface soak functionality
@@ -273,7 +273,7 @@ class bokeh_layout:
             self.o2adv2.on_change('value_throttled', self.update_surface_soak_plot)
         
         # Define dashboard layout depending on how many oxygen sensors are present
-        if 'sbeox0Mm/L'not in self.param_list:
+        if 'sbeox0Mm/L' not in self.param_list:
             layout = column(row(Spacer(width=40), self.prev_profile, 
                                 Spacer(width=50), self.profile, 
                                 self.next_profile),
@@ -317,8 +317,8 @@ class bokeh_layout:
         flag_factors = ['0','1','3','4']
         flag_palette = ['blue','green','orange','red']
         heave_color_mapper = CategoricalColorMapper(factors = flag_factors,
-                                              palette = flag_palette,
-                                             )
+                                                    palette = flag_palette,
+                                                    )
         heave_color_dict = dict(field='prDM_QC', transform = heave_color_mapper)
 
         # Set the plot tooltips    
@@ -620,7 +620,7 @@ class bokeh_layout:
                      x_axis_location="below",
                      tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
                      toolbar_location='above',
-                     width=300,
+                     width=400,
                      height=450,
                      output_backend='webgl',
                     )
@@ -645,35 +645,6 @@ class bokeh_layout:
             left = box_dict[item]['box_coords']['left']
             ts_plot.add_layout(BoxAnnotation(top=top, bottom=bottom, left=left, right=right, line_color='red', line_width=1, line_alpha=0.5, fill_color='red', fill_alpha=0.1))
             ts_plot.add_layout(Label(x=box_dict[item]['label_coords'][0], y=box_dict[item]['label_coords'][1], x_units="data", y_units="data", text=box_dict[item]['label'],text_align='center', text_baseline='middle'))
-              
-        # saiw_box = calculations.get_water_mass_label('SAIW')
-        # ts_plot.patch(saiw_box['parameters']['salinity'], 
-        #               saiw_box['parameters']['temperature'],
-        #               line_color='red', line_width=1, 
-        #               alpha=0.5, fill_color='red', fill_alpha=0.1,)
-        # ts_plot.add_layout(saiw_box['label'])
-        # # LSW
-        # lsw_box = calculations.get_water_mass_label('LSW')
-        # ts_plot.patch(lsw_box['parameters']['salinity'], 
-        #               lsw_box['parameters']['temperature'],
-        #               line_color='red', line_width=1, 
-        #               alpha=0.5, fill_color='red', fill_alpha=0.1,)
-        # ts_plot.add_layout(lsw_box['label'])
-        # # NEADW
-        # neadw_box = calculations.get_water_mass_label('LSW')
-        # ts_plot.patch(neadw_box['parameters']['salinity'], 
-        #               neadw_box['parameters']['temperature'],
-        #               line_color='red', line_width=1, 
-        #               alpha=0.5, fill_color='red', fill_alpha=0.1,)
-        # ts_plot.add_layout(neadw_box['label'])
-        # # LDW
-        # ldw_box = calculations.get_water_mass_label('LDW')
-        # ts_plot.add_layout(ldw_box['box'])
-        # ts_plot.add_layout(ldw_box['label'])
-        # # ISOW
-        # isow_box = calculations.get_water_mass_label('ISOW')
-        # ts_plot.add_layout(isow_box['box'])
-        # ts_plot.add_layout(isow_box['label'])
 
         # Add data to plot
         ts_plot.scatter('sal', 'temp',
@@ -793,7 +764,7 @@ class bokeh_layout:
         self.next_profile.on_click(self.next_pf)
         self.prev_profile.on_click(self.prev_pf)
         self.sensor_suite.on_change('active', self.update_binning_plot)
-        # self.screen_print.on_click(self.screen_html)
+        self.screen_print.on_click(self.screen_html)
     
         # Define dashboard layout
         layout = column(row(Spacer(width=40), self.prev_profile, 
@@ -815,6 +786,7 @@ class bokeh_layout:
                                      ncols=1,width=600,height=200,),
                             self.ts_plot),
                        )
+        self.visualisation_layout = layout
         # Add layout to document
         doc.add_root(layout)
         

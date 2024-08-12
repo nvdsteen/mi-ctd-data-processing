@@ -9,6 +9,7 @@ import pandas as pd
 import gc
 import re
 import math 
+import numpy as np
 
 # Import bespoke functions
 import scripts.calculations as calculations
@@ -61,16 +62,81 @@ def process_cnv(raw_directory):
             'timelist': timelist,
             'systimelist': systimelist}
 
+def get_NMEA_from_header(directory, fileformat):
+    '''
+    Parameters: 
+        directory: str
+        fileformat: str
 
+    '''
+    
+    # Get CNV filenames
+    filelist = os.listdir(directory)
+    infofilelist = []
+    
+    for item in filelist:
+        if item.endswith(".%s" % fileformat.lower()):
+            item = item.split('.')
+            infofilelist.append(item[0].upper())
+    
+    # Set dataframe for population
+    df_NMEA = pd.DataFrame(columns = ['CTD number', 'Lat','Long','Upload Time','UTC Time'])
+    
+    # Extract lat, long and timestamps from cnv file        
+    for item in infofilelist:
+        f = open(os.path.join(directory,item+".%s" % fileformat.lower()))
+        latdec = np.nan 
+        londec = np.nan
+        upload_time = ''
+        utc_time = ''
+        
+        for line in f:
+            line = line.rstrip()
+            if line.startswith("* NMEA Latitude"):
+                x = line.split( )
+                latdec = float(x[5])/60
+                latdec = latdec + float(x[4])
+                if x[6]=='S':
+                    latdec = latdec * -1
+
+            if line.startswith("* NMEA Longitude"):
+                x = line.split( )
+                londec = float(x[5])/60
+                londec = londec + float(x[4])
+                if x[6]=='W':
+                    londec = londec * -1
+                
+            if line.startswith("* System UpLoad Time"):
+                upload_time = line
+                
+            if line.startswith("* System UTC"):
+                utc_time = line
+
+        # Save metadata to dataframe for file
+        df_NMEA = pd.concat([df_NMEA, 
+                             pd.DataFrame([[item,latdec,londec,upload_time,utc_time]], 
+                                          columns = ['CTD number', 'Lat','Long','Upload Time','UTC Time'])
+                             ]
+                            )
+    df_NMEA['Upload Time'] = pd.to_datetime(df_NMEA['Upload Time'].str.split('= ',expand=True)[1], format= '%b %d %Y %H:%M:%S')
+    df_NMEA['UTC Time'] = pd.to_datetime(df_NMEA['UTC Time'].str.split('= ',expand=True)[1], format= '%b %d %Y %H:%M:%S')
+    
+    return df_NMEA
 
 #%%
-def load_logsheet(logsheets):
+def load_logsheet(logsheets,
+                  cruiseID,
+                  cnvfilelist):
     """
     Load logsheet if it exists, rename and reformat columns accordingly 
     
     Parameters:
         logsheets: str
             Name of file containing the logsheet
+        cruiseID: str
+            Cruise Code
+        cnvfilelist: list
+            list of CNV files to be processed
             
     Returns:
         pandas.DataFrame
@@ -86,9 +152,31 @@ def load_logsheet(logsheets):
                            'Latitude [degrees_north]', 'Longitude [degrees_east]',
                            'Bot. depth [m]']
         ctd_log['Event number'] = ctd_log['Event number'].astype(int)
-    
+        ctd_log['CTD number']  = ctd_log['CTD number'].str.upper()
+
         print("Number of CTD events in logsheet: %s" % len(ctd_log))
+
+        # Check cruise matches ID provided for processing and is unique within the logsheet
+        log_cruise_values = ctd_log['Cruise'].unique().tolist()
+        if len(log_cruise_values)!=1:
+            print("\nACTION *** Multiple cruises in the logsheet. Please check for typos or split logsheet by cruises")
+            print("\tCruises listed in logsheet: %s" % log_cruise_values)
+        else:
+            if log_cruise_values[0] != cruiseID:
+                print("\nACTION *** Cruise recorded in the logsheet does not match the cruise ID provided for processing. Please correct the logsheet.")
+                print("\tCruise listed in logsheet: %s" % log_cruise_values[0])
+        
+        # Check CNV filenames against filenames in logsheet
+        a = list(set(cnvfilelist) - set(ctd_log['CTD number'].unique().tolist()))
+        b = list(set(ctd_log['CTD number'].unique().tolist()) - set(cnvfilelist))
+        
+        if len(a) !=0 or len(b) != 0:
+            print('\nACTION *** Discrepancy in available CTD metadata between the Log and the header files. ***')
+            print("\tFilenames not in the CTD logsheet \t\t\t\t%s" % a)
+            print("\tCTD logsheet filenames without files in the raw data folder \t%s" % b)
+
     else:
+        print('Logsheet file not provided.')
         ctd_log = None
     
     return ctd_log
@@ -113,98 +201,108 @@ def create_ctd_events(cruiseID,
     """
     
     cnv_data = process_cnv(raw_directory)
+
+    print("\nExtracting cast metadata from the header information for each cast for reference.")
+    df_NMEA = get_NMEA_from_header(raw_directory, 'cnv')
+    # Check if NMEA stream position and time saved to CTD header in CNV files
+    # Check all fields populated
+    print('\tNumber of HDR files available in cruise folder: %s' % (len(df_NMEA)))
+    df_missingNMEA = df_NMEA.isnull().sum()
+    for item in ['Lat','Long','Upload Time','UTC Time']:
+        if df_missingNMEA[item]!=0:
+            counts = df_missingNMEA[item]
+            print("ACTION *** %s missing in %s HDR files *** Ensure %s entered into logsheet from paper logs for:" % (item, counts, tem))
+            print(df_NMEA[df_NMEA[item].isnull()]['CTD number'].tolist())
+        else:
+            print("\t%s present in all HDR files" % (item))
+
     systimelist = cnv_data['systimelist']
     latdec = calculations.convert_latitude_to_decimal(cnv_data['latlist'])
     longdec = calculations.convert_longitude_to_decimal(cnv_data['longlist'])
     logsheets = os.path.join(logs,'%s_Log.xls' % cruiseID)
-    ctd_log = load_logsheet(logsheets)
+    ctd_log = load_logsheet(logsheets, cruiseID, cnvfilelist=cnv_data['cnvfilelist'])
     
-    # Check if NMEA stream position and time saved to CTD header
-    if len(systimelist)==0 or len(latdec)==0 or len(longdec)==0:  
-        ### if there is no NMEA
-        print("No NMEA stream metadata available for at least one of time, lat and long from CTD header.")
-        db_metadata = os.path.join(logs,'Metadata_'+cruiseID+'.csv')
+    # Merge profiles with metadata
+    ## Use the NMEA time and position (lat and long) as prefered source for these fields
+    if df_missingNMEA.sum() == 0:
         
-        if not os.path.exists(logsheets):                                               ### if there is no logsheet (and no NMEA)
-            print("No logsheet file. Lat/lon will need to be extracted from underway data streams for CTD date-times.")
-            
-            # Collate a list of the system time and add on time elapsed until the surface soak to approximate start of downcast for underway postion extraction of lat/lon 
-            ctd_events_nopos = pd.DataFrame()
-            if len(systimelist)!=0:
-                ctd_events_nopos['Deck_checks']  = systimelist
-                ctd_events_nopos['Deck_checks'] = pd.to_datetime(ctd_events_nopos['Deck_checks'].str.replace('\* System UTC = ','',regex=True), format= '%b %d %Y %H:%M:%S')
-            else:
-                ctd_events_nopos['Deck_checks'] = ''
-            ctd_events_nopos['Cruise'] = cruiseID
-            ctd_events_nopos['CTD number']  = cnv_data['cnvfilelist']
-    
-            # Join output from pumpdf based on CTD number
-            if len(systimelist)!=0:
-                ctd_events_nopos = ctd_events_nopos.merge(pumpdf, on='CTD number')
-                ctd_events_nopos['CTD_start'] = ctd_events_nopos['Deck_checks'] + ctd_events_nopos['Start'] 
-                ctd_events_nopos['CTD_start'] = ctd_events_nopos['CTD_start'].dt.round('s')
-                del ctd_events_nopos['Start']
-            else:
-                ctd_events_nopos['CTD_start'] = ''
-            
-            if not os.path.exists(db_metadata):                                         ### if no metadata file present make one without Lat Lon
-                # Save metadata to file for underway postion extraction of lat/lon
-                ctd_events_nopos.to_csv(os.path.join(logs,'Metadata_'+cruiseID+'_nopos.csv'), index= False)
-                print('Metadata_'+cruiseID+'_nopos.csv saved to logsheets folder. Populate lat/lon positions from underway database before proceeding.')
-            else:                                                                       ### if user has populated metadata file with Lat Lons
-                print("File present with latitude and longitude from database underway SCS processing.")
-                ctd_events = pd.read_csv(db_metadata, parse_dates = ['Deck_checks',
-                                                                     'CTD_start'
-                                                                    ])
-                
-        else: ### if there is a logsheet but no NMEA
-            # Merge logsheet metadata in data frame ctd_log with date-times from header
-            ctd_events = pd.DataFrame() 
-            ctd_events['Deck_checks'] = systimelist 
-            ctd_events['Deck_checks'] = pd.to_datetime(ctd_events['Deck_checks'].str.replace('\* System UTC = ',''), format= '%b %d %Y %H:%M:%S')
-            ctd_events['Cruise'] = cruiseID
-            ctd_events['CTD number']  = cnv_data['cnvfilelist']
-            ctd_events = ctd_events.merge(ctd_log, on=['Cruise','CTD number'])
-            print("Number of CTD events in merged logsheet: %s" % len(ctd_log))
-            
-            #join output from pumpdf based on CTD number
-            ctd_events = ctd_events.merge(pumpdf, on='CTD number')
-            ctd_events['CTD_start'] = ctd_events['Deck_checks'] + ctd_events['Start'] 
-            ctd_events['CTD_start'] = ctd_events['CTD_start'].dt.round('s')
-            del ctd_events['Start']
-            
-    
-    else:                                                                               ### if there is NMEA
-        # Build ctd_events dataframe from metadata lists extracted from header files
-        ctd_events = pd.DataFrame()
-        ctd_events['Deck_checks']  = cnv_data['timelist']
-        ctd_events['Deck_checks'] = pd.to_datetime(ctd_events['Deck_checks'].str.replace('\* System UpLoad Time = ','',regex=True), format= '%b %d %Y %H:%M:%S')
+        # Continue to build ctd_events dataframe from metadata in header
+        ctd_events = pd.DataFrame() 
+        ctd_events['Deck_checks'] = df_NMEA['UTC Time']
         ctd_events['Cruise'] = cruiseID
-        ctd_events['CTD number']  = cnv_data['cnvfilelist']
-        ctd_events['Latitude [degrees_north]'] = latdec
-        ctd_events['Longitude [degrees_east]'] = longdec
-    
+        ctd_events['CTD number']  = df_NMEA['CTD number']
+        ctd_events['Latitude [degrees_north]'] = df_NMEA['Lat']
+        ctd_events['Longitude [degrees_east]'] = df_NMEA['Long']
+
         #join output from pumpdf based on CTD number
         ctd_events = ctd_events.merge(pumpdf, on='CTD number')
-        ctd_events['CTD_start'] = ctd_events['Deck_checks'] + ctd_events['Start'] 
+        ctd_events['CTD_start'] = ctd_events['Deck_checks'] + ctd_events['Start']
         ctd_events['CTD_start'] = ctd_events['CTD_start'].dt.round('s')
         del ctd_events['Start']
         
         ## Join additional metadata fields if logsheet exists
-        try: ### if there is NMEA and logsheet then merge 
-            ctd_log
+        if ctd_log is not None:   ### if there is NMEA and logsheet then merge 
             # Merge logsheet metadata (less position data) in data frame ctd_log with date-times from header
+            print("Merging NMEA lat, long and time with logsheet populated during the cruise")
             subset_columns = ctd_log.columns.to_list()
             subset_columns.remove('Latitude [degrees_north]')
             subset_columns.remove('Longitude [degrees_east]')
+            ctd_log['CTD number'] = ctd_log['CTD number'].str.upper()
             ctd_events = ctd_events.merge(ctd_log[subset_columns], on=['CTD number', 'Cruise'])
-            print("Number of CTD events in merged logsheet: %s" % len(ctd_log))
-        except NameError:
+            print("\tNumber of CTD events in merged logsheet: %s" % len(ctd_log))
+            print("\tNumber of CTD events after merging metadata from CTD header files with logsheets: %s" % len(ctd_events))          
+           
+        else:
             print("No logsheet to merge additional cast metadata.")
-            
-        print("Number of CTD events from headers: %s" % len(ctd_events))
         
-    return ctd_events
+        ctd_events_nopos = None
+        
+    ## In the absence of the NMEA fields then use the logsheet metadata
+    elif os.path.exists(logsheets) and (df_missingNMEA['Lat'] != 0 or df_missingNMEA['Long'] != 0):
+        
+        # Merge logsheet metadata in data frame ctd_log with date-times from header
+        ctd_events = pd.DataFrame()
+        if df_missingNMEA['UTC Time'] == 0: 
+            ctd_events['Deck_checks'] = df_NMEA['UTC Time']
+        else:
+            ctd_events['Deck_checks'] = df_NMEA['Upload Time']
+        ctd_events['Cruise'] = cruiseID
+        ctd_events['CTD number']  = df_missingNMEA['CTD number']
+        ctd_events = ctd_events.merge(ctd_log, on=['Cruise','CTD number'])
+        print("Number of CTD events in merged logsheet: %s" % len(ctd_log))
+
+        #join output from pumpdf based on CTD number
+        ctd_events = ctd_events.merge(pumpdf, on='CTD number')
+        ctd_events['CTD_start'] = ctd_events['Deck_checks'] + ctd_events['Start']
+        ctd_events['CTD_start'] = ctd_events['CTD_start'].dt.round('s')
+        del ctd_events['Start']
+
+        ctd_events_nopos = None
+        
+    ## In the absence of both NMEA and logsheets then take the system upload time (have to assume this is correctly synchronised with the ship's time) and get lat/long positions from the underway dataset
+    else:
+        print("ACTION *** No logsheet file or NMEA data in the HDR files. Lat/lon will need to be extracted from underway data streams for CTD date-times. ***")
+            
+        # Collate a list of the system time and add on time elapsed until the surface soak to approximate start of downcast for underway postion extraction of lat/lon 
+        ctd_events_nopos = pd.DataFrame()
+        if len(systimelist)!=0:
+            ctd_events_nopos['Deck_checks']  = df_NMEA['Upload Time']
+        else:
+            ctd_events_nopos['Deck_checks'] = ''
+        ctd_events_nopos['Cruise'] = cruiseID
+        ctd_events_nopos['CTD number']  = df_NMEA['CTD number']
+
+        #join output from pumpdf based on CTD number
+        if len(systimelist)!=0:
+            ctd_events_nopos = ctd_events_nopos.merge(pumpdf, on='CTD number')
+            ctd_events_nopos['CTD_start'] = ctd_events_nopos['Deck_checks'] + pd.Timedelta(ctd_events_nopos['Start'], unit='S')  
+            ctd_events_nopos['CTD_start'] = ctd_events_nopos['CTD_start'].dt.round('S')
+            del ctd_events_nopos['Start']
+        else:
+            ctd_events_nopos['CTD_start'] = ''
+        
+    return {'ctd_events': ctd_events,
+            'ctd_events_nopos': ctd_events_nopos}
 
 #%%
 def create_output_csv_for_fisheries(df, output_directory):

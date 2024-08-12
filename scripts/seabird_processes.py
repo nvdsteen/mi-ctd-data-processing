@@ -29,7 +29,7 @@ def heave_flagging(df, vel, window):
         
     """
     dfo = df.copy(deep=True)
-    dfo['prDM_QC'] = '0' # Set all 
+    dfo['prDM_QC'] = '0' # Set all to 0
     # Calculate the velocity of the CTD using pressure and time
     dfo['CTDvel'] = dfo['prDM'].diff(1)/dfo['timeS'].diff(1)
     # Identify down cast data with a velocity below the user defined velocity 

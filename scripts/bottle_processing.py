@@ -9,8 +9,10 @@ import pandas as pd
 from datetime import datetime as dt
 import seawater
 
+import scripts.sensor_configuration as sensor_configuration
+
 #%%    
-def sbe_btl2df(directory):
+def sbe_btl2df(directory, raw_folder):
     """
     This function extracts information from a series of bottle files and 
     returns it as a single Dataframe.
@@ -98,6 +100,13 @@ def sbe_btl2df(directory):
                 data.columns = header[0]
                 data.insert(0, 'CTD number', f.replace('.btl','').upper())
                 data['Time'] = time
+                
+                # Rename voltage channels to sensor type
+                sensor_dict = sensor_configuration.file_sensor_config(raw_folder, f)
+                data_all.rename(columns=sensor_dict, inplace=True)
+                if 'NotInUse' in data.columns:
+                    data = data.drop(columns=['NotInUse'])
+
                 data_all = pd.concat([data_all, data], sort=False)
         data_all = data_all.reset_index(drop=True)
     # Ensure date is in the expected formated
@@ -107,6 +116,7 @@ def sbe_btl2df(directory):
     # Re-format Bottle Firing Time
     data_all['Bottle Firing Time'] = data_all.apply(lambda x: dt.strptime(x['Date'] + ' ' + x['Time'], '%d %b %Y %H:%M:%S'), axis=1)
     data_all.drop('Time', axis=1, inplace=True)
+
     data_all = data_all.loc[:,~data_all.columns.duplicated()]
     
     return data_all
@@ -156,7 +166,8 @@ def sbe352df(directory):
 def create_bottle_summary(bottle_directory, cruiseID,
                           logs,
                           ctd_events,
-                          sbe35_raw):
+                          sbe35_raw,
+                          raw_folder):
     # TODO: Should not have a function that doesn't return something
     # Should really return the data frame and then save it to a csv file within the notebook
     """
@@ -173,11 +184,13 @@ def create_bottle_summary(bottle_directory, cruiseID,
             Data collected from the CTD over the entire duration of the research cruise
         sbe35_raw: str
             Name of directory with raw output files from the SBE35 sensor
+        raw_folder: str
+            Name of directory where raw data files are stored.
     Returns:
         Saves CSV files with the bottle summary
     """
     ## Load event, bottle logsheet metadata, .btl firing metadata and SBE35 file temperatures
-    
+    print("\nMerging bottle firing data with metadata from logsheets")
     # Run through btl file outputs and reformat to a csv for the cruise using function sbe_btl2df()
     if len(os.listdir(bottle_directory))>0:
         
@@ -185,12 +198,14 @@ def create_bottle_summary(bottle_directory, cruiseID,
         ## Reformat the .btl files into a single csv
         ####################################################################################################################################
         
-        btl_output = sbe_btl2df(bottle_directory)
+        btl_output = sbe_btl2df(bottle_directory, raw_folder)
 
                         ### ED removing second o2 sensor variables from end of following list 21/06/2021
         btl_output = btl_output.rename(columns={'PrDM': 'prDM', 'DepSM': 'depSM', 'T090C': 't090C', 'T190C': 't190C', 'C0S/m': 'c0S/m', 'C1S/m': 'c1S/m', 
                                                 'Sal00': 'sal00', 'Sal11': 'sal11', 'Sbeox0V': 'sbeox0V', 'Sbeox0Mm/L': 'sbeox0Mm/L', 'Sbeox1V': 'sbeox1V', 'Sbeox1Mm/L': 'sbeox1Mm/L'})
         btl_output['Bottle']=btl_output['Bottle'].astype(int)
+
+        print("\tNumber of bottles in .btl files: %s" % len(btl_output))
 
         # Check for duplicate bottle firings in the file
         print("\nACTION *** Check for duplicates of the following bottle firing events ***")
@@ -221,6 +236,23 @@ def create_bottle_summary(bottle_directory, cruiseID,
 
             print("\tNumber of bottle logsheet rows with Bedford Numbers: %s" % len(bedfords[bedfords['Bedford Number'].notnull()]))
             print("\tNumber of bottle logsheet rows: %s" % len(bedfords))
+           
+            # Check for duplicate bottle firings in the file
+            if len(bedfords[bedfords['Bedford Number'].notnull()])>0:
+                df_x = bedfords[bedfords['Bedford Number'].notnull()]
+                bedford_duplicated = df_x[df_x['Bedford Number'].duplicated()]['Bedford Number'].tolist()
+                if len(bedford_duplicated)>0:
+                    print("\nACTION *** Check for duplicated Bedford Numbers ***")
+                    display(bedfords[bedfords['Bedford Number'].isin(bedford_duplicated)].sort_values(['Bedford Number', 'CTD number','Bottle'], ascending=[True, True, True]))
+                    
+            # Check bottle firing flags are valid
+            file_flags = bedfords['Status'].unique().tolist()
+
+            c = list(set(file_flags) - set(['G','L','M','DNF','B']))
+            if len(c)>0:
+                print("ACTION *** Unknown bottle status flags included in bottle log: ***")
+                print(c)
+                print("ACTION *** Please correct in the bottle log ***")
 
             ####################################################################################################################################
             # Combine metadata with bottle logsheet metadata

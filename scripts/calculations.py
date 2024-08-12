@@ -69,7 +69,7 @@ def oxysol(T,S):
 #%%
 def tau(T, P, tau20, D1, D2):
     """
-    Calculates ??????
+    Calculates 
     
     Parameters:
         T: int
