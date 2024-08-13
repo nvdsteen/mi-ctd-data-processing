@@ -301,9 +301,20 @@ def create_ctd_events(cruiseID,
             del ctd_events_nopos['Start']
         else:
             ctd_events_nopos['CTD_start'] = ''
+
+        db_metadata = os.path.join(logs,'Metadata_'+cruiseID+'.csv')
+
+        if not os.path.exists(db_metadata):                                         ### if no metadata file present make one without Lat Lon
+            # Save metadata to file for underway postion extraction of lat/lon
+            ctd_events_nopos.to_csv(os.path.join(logs,'Metadata_'+cruiseID+'_nopos.csv'), index= False)
+            print('Metadata_'+cruiseID+'_nopos.csv saved to logsheets folder. Populate lat/lon positions from underway database before proceeding.')
+        else:                                                                       ### if user has populated metadata file with Lat Lons
+            print("File present with latitude and longitude from database underway SCS processing.")
+            ctd_events = pd.read_csv(db_metadata, parse_dates = ['Deck_checks',
+                                                                'CTD_start'
+                                                                ])
         
-    return {'ctd_events': ctd_events,
-            'ctd_events_nopos': ctd_events_nopos}
+    return ctd_events
 
 #%%
 def create_output_csv_for_fisheries(df, output_directory):
