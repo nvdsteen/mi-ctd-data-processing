@@ -4,7 +4,7 @@ This reposisory contains the Ireland's Marine Institute's CTD Data Processing fu
 The main aim of this work was to create a consistent set of data processing steps that could be used both at sea, with limited internet access, and back in the office/laboratory. 
 
 The Marine Institute uses 3 Jupyter Notebooks, written in python, to process CTD data from acqusition, conduct quality control checks and carry out calibration based on bottles collected concurrent to CTD measurements:
-1. CTD Data Processing: [CTD_profiles_processing.ipynb](https://github.com/IrishMarineInstitute/mi-ctd-data-processing/blob/main/CTD_Profiles_Processing.ipynb)
+1. CTD Profiles Processing: [CTD_profiles_processing.ipynb](https://github.com/IrishMarineInstitute/mi-ctd-data-processing/blob/main/CTD_Profiles_Processing.ipynb)
 2. Calibrations
 3. Quality Checks
 
