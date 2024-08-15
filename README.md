@@ -21,7 +21,6 @@ The notebook was developed using Python 3.12 and requires the following python p
 * seawater=3.3.5
 * bokeh=3.5.1
 * xlrd=2.0.1
-* ipywidgets=7.8.1
 * widgetsnbextension=3.6.1
 * jupyterlab_widgets
 

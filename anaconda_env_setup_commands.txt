@@ -28,7 +28,6 @@ conda install -c conda-forge pyodbc=5.0.1
 conda install -c conda-forge seawater=3.3.5
 conda install -c conda-forge bokeh=3.5.1
 conda install -c conda-forge xlrd=2.0.1
-conda install -c conda-forge ipywidgets=7.8.1
 conda install -c conda-forge widgetsnbextension=3.6.1
 conda install -c conda-forge jupyterlab_widgets
 
