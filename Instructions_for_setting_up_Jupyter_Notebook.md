@@ -16,7 +16,7 @@ In the windows searchbar type Jupyter Notebook and click on the one with your en
 
 To operate or test the Notebooks:
 
-The CTD Profiles Processing ([CTD_Profiles_Processing.ipynb](https://github.com/IrishMarineInstitute/mi-ctd-data-processing/blob/main/CTD_Profiles_Processing.ipynb)) Jupyter Notebook processes the raw Seabird SBE911 data and saves processed data and metadata to a set of folders. In order to run this notebook successfully raw files and metadata (where available) must be in place.
+The CTD Profiles Processing Jupyter Notebook ([CTD_Profiles_Processing.ipynb](https://github.com/IrishMarineInstitute/mi-ctd-data-processing/blob/main/CTD_Profiles_Processing.ipynb))  processes the raw Seabird SBE911 data and saves processed data and metadata to a set of folders. In order to run this notebook successfully raw files and metadata (where available) must be in place.
 
 ### Create working directory with required directory set-up
 First create a directory folder (either locally or on a networked drive) named 'CTD', which will hold a copy of the raw data and ultimately contain all the processed output files.
