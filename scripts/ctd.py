@@ -66,10 +66,8 @@ class CTD_Data:
             names = []
             for name in files:
                 if filetype == '.bl' and name.lower().endswith(filetype):
-                    f = open(os.path.join(rawFileDirectory,name))
-                    line_num = 0
-                    for line in f.readlines():
-                        line_num += 1
+                    with open(os.path.join(rawFileDirectory,name), 'r') as f:
+                        line_num = len(f.readlines()) # not most efficient
                     if line_num > 2:
                         #print('greater than 2: ' + name)    
                         names.append(name)
