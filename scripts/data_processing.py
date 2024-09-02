@@ -142,6 +142,7 @@ def load_logsheet(logsheets,
     Returns:
         pandas.DataFrame
     """
+    ctd_log = pd.DataFrame()
     if os.path.exists(logsheets):
         # Load CTD event metadata from logsheets
         print('Logsheet file saved in archive. Loading metadata from the logsheet file.')
@@ -178,7 +179,7 @@ def load_logsheet(logsheets,
 
     else:
         print('Logsheet file not provided.')
-        ctd_log = None
+        # ctd_log = None
     
     return ctd_log
 
@@ -296,7 +297,7 @@ def create_ctd_events(cruiseID,
         #join output from pumpdf based on CTD number
         if len(systimelist)!=0:
             ctd_events_nopos = ctd_events_nopos.merge(pumpdf, on='CTD number')
-            ctd_events_nopos['CTD_start'] = ctd_events_nopos['Deck_checks'] + pd.Timedelta(ctd_events_nopos['Start'], unit='S')  
+            ctd_events_nopos['CTD_start'] = ctd_events_nopos['Deck_checks'] + pd.Timedelta(ctd_events_nopos['Start'], unit='S') # type: ignore 
             ctd_events_nopos['CTD_start'] = ctd_events_nopos['CTD_start'].dt.round('S')
             del ctd_events_nopos['Start']
         else:
@@ -454,26 +455,19 @@ def cnv2df(cruiseID, file_list, params=[], raw_folder = '', directory = '',
     """
     
     # Checks function inputs are of the correct type
-    if type(file_list) != list:
-        print("Error: List of files not provided to function.")
-        return
-    
-    if type(params) != list:
-        print("Error: params should be provided as a list or left to default")
-        return
+    def type_check(file_list=file_list, params=params, txt_strip=txt_strip, ud_id=ud_id, z_cord=z_cord):
+        if not isinstance(file_list, list):
+            raise TypeError("Error: 'file_list' should be a list.")
+
+        if not isinstance(params, list) or not isinstance(txt_strip, str) or \
+           not isinstance(ud_id, bool) or not isinstance(z_cord, str):
+            raise TypeError(
+                "Error: 'params' should be a list, 'txt_strip' should be a string, "
+                "'ud_id' should be a boolean, and 'z_cord' should be a string."
+            )
         
-    if type(txt_strip) != str:
-        print("Error: txt_strip should be a string or left to default")
-        return
-    
-    if type(ud_id) != bool:
-        print("Error: ud_id should be True or False")
-        return
-        
-    if type(z_cord) != str:
-        print("Error: z_cord should be a string or left to default")
-        return
-    
+    type_check(file_list=file_list, params=params, txt_strip=txt_strip, ud_id=ud_id, z_cord=z_cord)
+
     # Set DataFrame container for function
     data_all = pd.DataFrame()
     
@@ -518,13 +512,12 @@ def cnv2df(cruiseID, file_list, params=[], raw_folder = '', directory = '',
                 
         # Checks the z-cordinate parameter provided exists in the data.
         if ud_id == True and z_cord not in col_name:
-            print("Please provide the name of a valid z-co-ordinate within file: %s." % file)
-            return
+            raise IOError("Please provide the name of a valid z-co-ordinate within file: %s." % file)
             
         # If the cast is to be split into down and up cast cycles use the z-cord provided.
         if ud_id ==True:
             data['cast'] = 'D'
-            data.loc[data[z_cord].idxmax()+1:,['cast']] = 'U'
+            data.loc[int(data[z_cord].idxmax())+1:,['cast']] = 'U'
         
         # Add profile name to the DataFrame as taken from the filename using txt_strip argument.
         data.insert(0, 'profile', file.replace(txt_strip,'').upper())
@@ -728,7 +721,7 @@ def combine_files2cast(dfin, combined, cell_id):
                     dfin['profile'] = dfin['profile'].str.replace(prfile,item,regex=True)
                     print("Data from file %s relabeled profile name to %s." % (prfile,item))
             else:
-                print("Cast for merging not present in file. Please checked combined variable defined in cell %s" % cell_id)
+                raise IOError("Cast for merging not present in file. Please checked combined variable defined in cell %s" % cell_id)
     else:
             print("No files indicated for merging.")
                
