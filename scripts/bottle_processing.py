@@ -8,6 +8,7 @@ import os
 import pandas as pd
 from datetime import datetime as dt
 import seawater
+from IPython.display import display
 
 import scripts.sensor_configuration as sensor_configuration
 
@@ -35,10 +36,10 @@ def sbe_btl2df(directory, raw_folder):
         file = os.path.join(directory,f)
         with open(file,'r') as prof:
             # Determine column names and descriptions and file header length
+            count = 0
+            col_name = []
+            data = []
             try:
-                count = 0
-                col_name = []
-                data = []
                 while True:
                     line = next(prof)
                     count += 1
@@ -80,8 +81,8 @@ def sbe_btl2df(directory, raw_folder):
                 
                 header = []        
                 for item in col_name:
-                    item = item.replace(' ',',')
-                    item = item.replace(' ','')
+                    item = item.replace(' ',',') # different from above?
+                    item = item.replace(' ','') # already replaced line above
                     item = item.replace(',,,',',')
                     item = item.replace(',,,,',',')
                     item = item.replace(',,,',',')
