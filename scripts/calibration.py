@@ -59,7 +59,7 @@ def cal_regression(df, samp, ctd, factor, qc):
     slope, intercept, r_value, p_value, std_err = stats.linregress(cal[z], cal['residual'])
     
     # Depedning on the significance of results (5% taken as level of confidence)
-    if p_value < 0.05:
+    if p_value < 0.05: # type: ignore
         # Apply linear regression slope and intercept co-efficients to the calibration dataset as the correction
         cal['linear_cal'] = cal[y] + slope * cal[z] + intercept
         cal_type = 'linear'

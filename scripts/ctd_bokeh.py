@@ -119,12 +119,12 @@ class bokeh_layout:
         if 'sbeox0Mm/L' in self.param_list:
             # Define the ColumnDataSource for the oxygen alignment plot 1
             oxy1_df = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>20)][['t090C','sbeox0Mm/L']]
-            oxy1_df['sbeox0Mm/L'] = oxy1_df['sbeox0Mm/L'].shift(periods=self.o2adv1.value*-2)
+            oxy1_df['sbeox0Mm/L'] = oxy1_df['sbeox0Mm/L'].shift(periods=self.o2adv1.value*-2) # type: ignore
             self.src_oxy1 = ColumnDataSource(oxy1_df)
         if 'sbeox1Mm/L' in self.param_list:
             # Define the ColumnDataSource for the oxygen alignment plot 2
             oxy2_df = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>20)][['t190C','sbeox1Mm/L']]
-            oxy2_df['sbeox1Mm/L'] = oxy2_df['sbeox1Mm/L'].shift(periods=self.o2adv2.value*-2)
+            oxy2_df['sbeox1Mm/L'] = oxy2_df['sbeox1Mm/L'].shift(periods=self.o2adv2.value*-2) # type: ignore
             self.src_oxy2 = ColumnDataSource(oxy2_df)
             
         # Set up pressure vs time plot settings
@@ -220,20 +220,20 @@ class bokeh_layout:
         if 'sbeox0Mm/L' in self.param_list:
             # Update source for p1
             oxy1_df_updated = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>20)][['t090C','sbeox0Mm/L']]
-            oxy1_df_updated['sbeox0Mm/L'] = oxy1_df_updated['sbeox0Mm/L'].shift(periods=self.o2adv1.value*-2)
+            oxy1_df_updated['sbeox0Mm/L'] = oxy1_df_updated['sbeox0Mm/L'].shift(periods=self.o2adv1.value*-2) # type: ignore
             src_oxy1_updated = ColumnDataSource(oxy1_df_updated)
             self.src_oxy1.data.update(src_oxy1_updated.data)
         
         if 'sbeox1Mm/L' in self.param_list:
             # Update source for p2
             oxy2_df_updated = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>20)][['t190C','sbeox1Mm/L']]
-            oxy2_df_updated['sbeox1Mm/L'] = oxy2_df_updated['sbeox1Mm/L'].shift(periods=self.o2adv2.value*-2)
+            oxy2_df_updated['sbeox1Mm/L'] = oxy2_df_updated['sbeox1Mm/L'].shift(periods=self.o2adv2.value*-2) # type: ignore
             src_oxy2_updated = ColumnDataSource(oxy2_df_updated)
             self.src_oxy2.data.update(src_oxy2_updated.data)
             
     def update_cast_start(self):
         # Identify selected point
-        point = (self.col_src_surface_soak.selected.indices)
+        point = (self.col_src_surface_soak.selected.indices) # type: ignore
         # Check only one point selected
         if len(point)!=1:
             print("Please select only 1 point")
@@ -626,8 +626,8 @@ class bokeh_layout:
                     )
         # Set linear colour mapping
         mapper = linear_cmap(field_name='oxy_conc', palette=Viridis256,
-                             low = self.col_src_ts.data['oxy_conc'].min(),
-                             high = self.col_src_ts.data['oxy_conc'].max()
+                             low = self.col_src_ts.data['oxy_conc'].min(), # type: ignore
+                             high = self.col_src_ts.data['oxy_conc'].max() # type: ignore
                              )
         color_bar = ColorBar(color_mapper=mapper['transform'], width=30,  
                              location=(0,0), title = "umol/L",)
@@ -665,8 +665,8 @@ class bokeh_layout:
         # Set linear colour mapping for temperature
         temperature_color_mapper = linear_cmap(field_name='temp', 
                                                palette=Viridis256,
-                                               low=self.col_src_ts.data['temp'].min(),
-                                               high=self.col_src_ts.data['temp'].max())
+                                               low=self.col_src_ts.data['temp'].min(), # type: ignore
+                                               high=self.col_src_ts.data['temp'].max()) # type: ignore
         temperature_color_bar = ColorBar(color_mapper=temperature_color_mapper['transform'], 
                                          width=30, 
                                          location=(0,0), 
@@ -691,8 +691,8 @@ class bokeh_layout:
         # Set linear colour mapping for salinity
         salinity_color_mapper = linear_cmap(field_name='sal', 
                                             palette=Viridis256 ,
-                                            low=self.col_src_ts.data['sal'].min() ,
-                                            high=self.col_src_ts.data['sal'].max())
+                                            low=self.col_src_ts.data['sal'].min() , # type: ignore
+                                            high=self.col_src_ts.data['sal'].max()) # type: ignore
         salinity_color_bar = ColorBar(color_mapper=salinity_color_mapper['transform'], 
                                       width=30,  location=(0,0), 
                                       title = "PSU",)
@@ -716,8 +716,8 @@ class bokeh_layout:
         # Set linear colour mapping
         doxy_color_mapper = linear_cmap(field_name='oxy_conc', 
                                         palette=Viridis256,
-                                        low=self.col_src_ts.data['oxy_conc'].min(),
-                                        high=self.col_src_ts.data['oxy_conc'].max())
+                                        low=self.col_src_ts.data['oxy_conc'].min(), # type: ignore
+                                        high=self.col_src_ts.data['oxy_conc'].max()) # type: ignore
         doxy_color_bar = ColorBar(color_mapper=doxy_color_mapper['transform'], 
                                   width=30,  location=(0,0), title = "umol/L",)
         doxy_section.add_layout(doxy_color_bar, 'right')

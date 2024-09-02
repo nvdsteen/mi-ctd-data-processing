@@ -7,6 +7,7 @@ Created on Tue Mar 26 09:29:53 2024
 import os
 import xml.etree.ElementTree as elementTree
 import pandas as pd 
+from IPython.display import display
 
 #%% 
 def get_sensor_coefficients(master_sensor_coeffs,
@@ -87,14 +88,14 @@ def file_sensor_config(directory, file):
     # Initialise dictionary to use to store sensor information
     sensor_dict = {}
     # Search XMLCON to find Sensor Array and the number of sensors within the file
-    sensor_count = int(config.find('./Instrument/SensorArray').attrib['Size'])
+    sensor_count = int(config.find('./Instrument/SensorArray').attrib['Size']) # type: ignore
     
     # Loop through the number of sensors present and find it's name, serial number and voltage channel
     for item in range(0,sensor_count):
         voltage_channel = 'v'+str(item-5)
-        sensor_type = list(config.find('./Instrument/SensorArray/Sensor[@index="%s"]' % item))[0].tag
+        sensor_type = list(config.find('./Instrument/SensorArray/Sensor[@index="%s"]' % item))[0].tag # type: ignore
         # Find Serial Number
-        sensor_sn = config.find('./Instrument/SensorArray/Sensor[@index="%s"]/%s/SerialNumber' % (item, sensor_type)).text
+        sensor_sn = config.find('./Instrument/SensorArray/Sensor[@index="%s"]/%s/SerialNumber' % (item, sensor_type)).text # type: ignore
         # Update sensor dictionary
         if type(sensor_sn)==str:
             sensor_dict.update({voltage_channel : sensor_type+'_sn'+sensor_sn})
@@ -208,7 +209,7 @@ def coeff_config(directory, sensor_coeffs, sensor_no):
                         if x[sensor_no].text==None:
                             coeff_vals.append('%s missing from XMLCON file.' % item)
                         else:
-                            coeff_vals.append(str(x[sensor_no].text.replace(' ','')))
+                            coeff_vals.append(str(x[sensor_no].text.replace(' ',''))) # type: ignore
                 
                 # Find each calibration coefficient in the XMLCON file
                 for item in coeff_labels:
@@ -217,13 +218,13 @@ def coeff_config(directory, sensor_coeffs, sensor_no):
                         if y[sensor_no].text==None:
                             coeff_vals.append('%s missing from XMLCON file.' % item)
                         else:
-                            coeff_vals.append(float(y[sensor_no].text.replace(' ','')))
+                            coeff_vals.append(float(y[sensor_no].text.replace(' ',''))) # type: ignore
                     else:
                         y = config.findall('./Instrument/SensorArray/Sensor/OxygenSensor/CalibrationCoefficients[@equation="1"]/%s' % item)
                         if y[sensor_no].text==None:
                             coeff_vals.append('%s missing from XMLCON file.' % item)
                         else:
-                            coeff_vals.append(float(y[sensor_no].text.replace(' ','')))
+                            coeff_vals.append(float(y[sensor_no].text.replace(' ',''))) # type: ignore
                 
                 # Create pandas DataFrame with details of the sensor and it's calibration
                 df_coeffs = pd.DataFrame(dict(zip(sensor_meta + coeff_labels,coeff_vals)), index=[file.lower().replace('.xmlcon','')])

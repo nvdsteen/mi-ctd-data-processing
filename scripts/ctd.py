@@ -8,6 +8,7 @@ import os
 import numpy as np
 import pandas as pd
 import chevron
+from typing import Dict, List
 
 # Import bespoke functions
 import scripts.calculations as calculations
@@ -55,6 +56,10 @@ class CTD_Data:
         self.blarrayItemsIndex=[]
         self.blarrayItemsValue=[]
         
+        self.MergeHeaderFile: int | None = None
+        self.numberArrayItems: int | None = None
+        self.arrayItems: List | Dict | None = None
+
         # Loop directory and get the file names and types 
         
         for filetype in filetypes:
@@ -243,7 +248,7 @@ def generate_psa_files(sensor_counts,
     elif proc_mode == 1:
         input_arg = [x for x in data.headerMissing if x not in data.cnvPresent] 
     if len(input_arg) > 0:
-        data.MergeHeaderFile = 0
+        data.MergeHeaderFile = 0 # type: ignore
         data.CreateFile = 2
         #data.arrayItems = dict2array(data.headerMissing)
         data.numberArrayItems = len(input_arg)
@@ -296,9 +301,9 @@ def generate_psa_files(sensor_counts,
     elif proc_mode == 1:
         input_arg = [x for x in data.blPresent if x not in data.btlPresent] 
     if len(input_arg) > 0:
-        data.numberArrayItems = len(input_arg)
+        data.numberArrayItems = len(input_arg) # type: ignore
         #print(data.numberArrayItems)
-        data.arrayItems = calculations.splitList(input_arg)
+        data.arrayItems = calculations.splitList(input_arg) # type: ignore
         name='MI_botsum.psa'
         generateXml(botTemplate, data, name)    
            
