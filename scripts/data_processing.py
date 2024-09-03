@@ -44,7 +44,7 @@ def process_cnv(raw_directory):
     
     # Extract lat, long and timestamp from cnv file and create list to add to dataframe        
     for item in cnvfilelist:
-        with open(raw_directory+"\\"+item+'.cnv') as f:
+        with open(os.path.join(raw_directory,item.lower())+'.cnv') as f:
             for line in f:
                 line = line.rstrip()
                 if line.startswith("* NMEA Latitude"):
@@ -85,7 +85,10 @@ def get_NMEA_from_header(directory, fileformat):
     
     # Extract lat, long and timestamps from cnv file        
     for item in infofilelist:
-        with open(os.path.join(directory,item+".%s" % fileformat.lower())) as f:
+        file_i_lower = os.path.join(directory,item.lower()+".%s" % fileformat.lower())
+        file_i_upper = os.path.join(directory,item.upper()+".%s" % fileformat.lower())
+        file_i = [file_i_lower, file_i_upper][os.path.exists(file_i_upper)]
+        with open(file_i) as f:
             latdec = np.nan 
             londec = np.nan
             upload_time = ''
@@ -243,7 +246,7 @@ def create_ctd_events(cruiseID,
         del ctd_events['Start']
         
         ## Join additional metadata fields if logsheet exists
-        if ctd_log is not None:   ### if there is NMEA and logsheet then merge 
+        if ctd_log is not None and not ctd_log.empty:   ### if there is NMEA and logsheet then merge 
             # Merge logsheet metadata (less position data) in data frame ctd_log with date-times from header
             print("Merging NMEA lat, long and time with logsheet populated during the cruise")
             subset_columns = ctd_log.columns.to_list()
