@@ -34,7 +34,7 @@ def sbe_btl2df(directory, raw_folder):
     # Loop through all files and read the relevant data from them
     for f in file_list:
         file = os.path.join(directory,f)
-        with open(file,'r') as prof:
+        with open(file,'r', encoding="latin1") as prof:
             # Determine column names and descriptions and file header length
             count = 0
             col_name = []
