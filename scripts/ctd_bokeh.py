@@ -23,6 +23,7 @@ def update_button_attr(button_name, disbld, b_type):
 
 #%%
 class bokeh_layout:
+    prDM_threshold = 20
     def __init__(self, profile_data, pump_data, output_path, downcast_data):
         
         # Define variables
@@ -106,7 +107,7 @@ class bokeh_layout:
         # Define surface soak functionality
         # Surface Soak data and manipulation
         # Define the ColumnDataSource for the surface soak screening plot
-        self.soak_df = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']<20) & (self.profile_data['cast']=='D')].copy(deep=True)
+        self.soak_df = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']<bokeh_layout.prDM_threshold) & (self.profile_data['cast']=='D')].copy(deep=True)
         self.soak_df["pumps_txt"] = "Off"
         self.soak_df.loc[self.soak_df["pumps"] == 1, "pumps_txt"] = "On"
         self.col_src_surface_soak = ColumnDataSource(self.soak_df)
@@ -118,12 +119,12 @@ class bokeh_layout:
         # Oxygen channel updates
         if 'sbeox0Mm/L' in self.param_list:
             # Define the ColumnDataSource for the oxygen alignment plot 1
-            oxy1_df = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>20)][['t090C','sbeox0Mm/L']]
+            oxy1_df = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>bokeh_layout.prDM_threshold)][['t090C','sbeox0Mm/L']]
             oxy1_df['sbeox0Mm/L'] = oxy1_df['sbeox0Mm/L'].shift(periods=self.o2adv1.value*-2) # type: ignore
             self.src_oxy1 = ColumnDataSource(oxy1_df)
         if 'sbeox1Mm/L' in self.param_list:
             # Define the ColumnDataSource for the oxygen alignment plot 2
-            oxy2_df = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>20)][['t190C','sbeox1Mm/L']]
+            oxy2_df = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>bokeh_layout.prDM_threshold)][['t190C','sbeox1Mm/L']]
             oxy2_df['sbeox1Mm/L'] = oxy2_df['sbeox1Mm/L'].shift(periods=self.o2adv2.value*-2) # type: ignore
             self.src_oxy2 = ColumnDataSource(oxy2_df)
             
@@ -204,7 +205,7 @@ class bokeh_layout:
             
     # Add update functions
     def update_surface_soak_plot(self, attr, old, new):
-        soak_data_updated = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']<20)  & (self.profile_data['cast']=='D')].copy(deep=True)
+        soak_data_updated = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']<bokeh_layout.prDM_threshold)  & (self.profile_data['cast']=='D')].copy(deep=True)
         soak_data_updated["pumps_txt"] = "Off"
         soak_data_updated.loc[soak_data_updated["pumps"] == 1, "pumps_txt"] = "On"
         src_updated = ColumnDataSource(soak_data_updated)
@@ -219,14 +220,14 @@ class bokeh_layout:
         # Oxygen channel updates
         if 'sbeox0Mm/L' in self.param_list:
             # Update source for p1
-            oxy1_df_updated = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>20)][['t090C','sbeox0Mm/L']]
+            oxy1_df_updated = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>bokeh_layout.prDM_threshold)][['t090C','sbeox0Mm/L']]
             oxy1_df_updated['sbeox0Mm/L'] = oxy1_df_updated['sbeox0Mm/L'].shift(periods=self.o2adv1.value*-2) # type: ignore
             src_oxy1_updated = ColumnDataSource(oxy1_df_updated)
             self.src_oxy1.data.update(src_oxy1_updated.data)
         
         if 'sbeox1Mm/L' in self.param_list:
             # Update source for p2
-            oxy2_df_updated = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>20)][['t190C','sbeox1Mm/L']]
+            oxy2_df_updated = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']>bokeh_layout.prDM_threshold)][['t190C','sbeox1Mm/L']]
             oxy2_df_updated['sbeox1Mm/L'] = oxy2_df_updated['sbeox1Mm/L'].shift(periods=self.o2adv2.value*-2) # type: ignore
             src_oxy2_updated = ColumnDataSource(oxy2_df_updated)
             self.src_oxy2.data.update(src_oxy2_updated.data)
