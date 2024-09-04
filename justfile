@@ -13,3 +13,7 @@ create_venv:
 
 ipython:
 	{{VENV_NAME}}/bin/ipython
+
+
+configure_precommit:
+    cp pre-commit .git/hooks/
