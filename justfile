@@ -17,3 +17,9 @@ ipython:
 
 configure_precommit:
     cp pre-commit .git/hooks/
+
+clean_notebook_outputs:
+    source {{VENV_ACTIVATE}} 
+    for f in `ls *.ipynb`; do \
+        jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace $f; \
+    done;
