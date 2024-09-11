@@ -5,6 +5,9 @@ Created on Tue Mar 26 09:35:40 2024
 @author: dosullivan1
 """
 
+import pandas as pd
+import math
+
 #%% 
 def heave_flagging(df, vel, window):
     """
@@ -96,8 +99,10 @@ def bin_data(input_df, cast, zcord, profile_id, params_out):
     bin_df = input_df[(input_df['cast']==cast) & (input_df['prDM_QC']!=4)].copy(deep=True)
 
     # Set the z-coordinate column for binning as 'bin'
-    bin_df['bin'] = bin_df[zcord]+0.5
-    bin_df['bin'] = bin_df['bin'].round(0)
+    # changed for more flexibility, same result for now
+    # bin_df['bin'] = bin_df[zcord]+0.5
+    # bin_df['bin'] = bin_df['bin'].round(0)
+    bin_df["bin"] = pd.cut(bin_df[zcord], bins=range(math.ceil(bin_df[zcord].max())+1), labels=range(1,math.ceil(bin_df[zcord].max())+1), right=False)
 
     # Combine the profile_id and z-cord in a list to set the groupby columns 
     # for the binning command then group by the mean for each bin
