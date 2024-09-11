@@ -23,7 +23,7 @@ def update_button_attr(button_name, disbld, b_type):
 
 #%%
 class bokeh_layout:
-    prDM_threshold = 20
+    prDM_threshold = 1
     def __init__(self, profile_data, pump_data, output_path, downcast_data):
         
         # Define variables
@@ -107,7 +107,7 @@ class bokeh_layout:
         # Define surface soak functionality
         # Surface Soak data and manipulation
         # Define the ColumnDataSource for the surface soak screening plot
-        self.soak_df = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']<bokeh_layout.prDM_threshold) & (self.profile_data['cast']=='D')].copy(deep=True)
+        self.soak_df = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']<20) & (self.profile_data['cast']=='D')].copy(deep=True)
         self.soak_df["pumps_txt"] = "Off"
         self.soak_df.loc[self.soak_df["pumps"] == 1, "pumps_txt"] = "On"
         self.col_src_surface_soak = ColumnDataSource(self.soak_df)
@@ -205,7 +205,7 @@ class bokeh_layout:
             
     # Add update functions
     def update_surface_soak_plot(self, attr, old, new):
-        soak_data_updated = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']<bokeh_layout.prDM_threshold)  & (self.profile_data['cast']=='D')].copy(deep=True)
+        soak_data_updated = self.profile_data[(self.profile_data['profile']==self.profile.value) & (self.profile_data['prDM']<20) & (self.profile_data['cast']=='D')].copy(deep=True)
         soak_data_updated["pumps_txt"] = "Off"
         soak_data_updated.loc[soak_data_updated["pumps"] == 1, "pumps_txt"] = "On"
         src_updated = ColumnDataSource(soak_data_updated)
