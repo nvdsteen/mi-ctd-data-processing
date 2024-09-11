@@ -5,6 +5,7 @@ Created on Tue Mar 26 09:35:40 2024
 @author: dosullivan1
 """
 
+import numpy as np
 import pandas as pd
 import math
 
@@ -68,7 +69,7 @@ def heave_flagging(df, vel, window):
     return dfo
 
 #%% 
-def bin_data(input_df, cast, zcord, profile_id, params_out):
+def bin_data(input_df, cast, zcord, profile_id, params_out, bin_width=1.):
     """
     Function to bin data based on heave flags in the pressure channel.
     Data are binned between +/-0.5 of the zcord using numeric mean.
@@ -87,6 +88,9 @@ def bin_data(input_df, cast, zcord, profile_id, params_out):
             
         profile_id: str
             Name of column containing the profile name
+
+        bin_width: int | float
+            The width of the bins.
             
         params_out: list
             Parameters to output, based on the column names in the screen 2Hz
@@ -102,7 +106,9 @@ def bin_data(input_df, cast, zcord, profile_id, params_out):
     # changed for more flexibility, same result for now
     # bin_df['bin'] = bin_df[zcord]+0.5
     # bin_df['bin'] = bin_df['bin'].round(0)
-    bin_df["bin"] = pd.cut(bin_df[zcord], bins=range(math.ceil(bin_df[zcord].max())+1), labels=range(1,math.ceil(bin_df[zcord].max())+1), right=False)
+    bins = list(np.arange(0, math.ceil(bin_df[zcord].max())+bin_width, bin_width))
+    bin_labels = [bi for bi in bins][1:]
+    bin_df["bin"] = pd.cut(bin_df[zcord], bins=bins, labels=bin_labels, right=False)
 
     # Combine the profile_id and z-cord in a list to set the groupby columns 
     # for the binning command then group by the mean for each bin
