@@ -374,7 +374,8 @@ def create_output_csv_for_fisheries(df, output_directory):
 def merge_data_with_metadata(cruiseID,
                              output_directory,
                              ctd_events,
-                             logs):
+                             logs,
+                             binning_info):
     """
     Combine data collected from the CTD with it's corresponding metadata and saves
     it as a CSV file
@@ -388,14 +389,16 @@ def merge_data_with_metadata(cruiseID,
             Data collected from the CTD over the period of the entire cruise
         logs: str
             Name of directory to save metadata csv file to
+        binning_info: str
+            String indicating the bin width and unit.
             
     Returns:
         pandas.DataFrame
     """
     # Merge metadata with cast data
     # Load binned CTD data
-    uncal_file = os.path.join(output_directory,'cruise_data_uncal_1mbinned.csv') 
-    df = pd.read_csv(uncal_file)
+    uncal_cruise_file = os.path.join(output_directory,f'cruise_data_uncal_{binning_info}binned.csv') 
+    df = pd.read_csv(uncal_cruise_file)
     # Add column with filename as lowercase for later matching
     df['CTD number lower'] = df['CTD number'].str.lower()
     print("Number of rows in profile dataframe prior to metadata merge: %s" % len(df))
@@ -413,7 +416,7 @@ def merge_data_with_metadata(cruiseID,
     print("Number of rows in profile dataframe after to metadata merge: %s" % len(df))
 
     # Save profiles ready for screening
-    df.to_csv(os.path.join(output_directory,'%s_CTDprofiles_uncal_1mbinned_meta.csv' % cruiseID), index=False)
+    df.to_csv(os.path.join(output_directory,f'{cruiseID}_CTDprofiles_uncal_{binning_info}binned_meta.csv'), index=False)
     print("Data file saved and ready for QC to output folder.")
     
     # Save metadata
