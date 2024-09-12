@@ -5,6 +5,7 @@ Created on Tue Mar 26 09:29:19 2024
 @author: dosullivan1
 """
 import os
+from pathlib import Path
 import pandas as pd
 import gc
 import re
@@ -41,10 +42,12 @@ def process_cnv(raw_directory):
         if item.endswith(".cnv"):
             item = item.split('.')
             cnvfilelist.append(item[0].upper())
+    cnv_extension = "cnv"
+    cnvfilelist = [str(file) for file in Path(raw_directory).rglob(f"*") if file.suffix.lower() == f'.{cnv_extension.lower()}']
     
     # Extract lat, long and timestamp from cnv file and create list to add to dataframe        
     for item in cnvfilelist:
-        with open(os.path.join(raw_directory,item.lower())+'.cnv') as f:
+        with open(item) as f:
             for line in f:
                 line = line.rstrip()
                 if line.startswith("* NMEA Latitude"):
@@ -56,7 +59,7 @@ def process_cnv(raw_directory):
                 if line.startswith("* System UTC"):
                     systimelist.append(line)
                 
-    return {'cnvfilelist': cnvfilelist,
+    return {'cnvfilelist': [Path(cnv_i).name for cnv_i in cnvfilelist],
             'latlist': latlist,
             'longlist': longlist,
             'timelist': timelist,
@@ -73,22 +76,23 @@ def get_NMEA_from_header(directory, fileformat):
     
     # Get CNV filenames
     filelist = os.listdir(directory)
-    infofilelist = []
-    
-    for item in filelist:
-        if item.endswith(".%s" % fileformat.lower()):
-            item = item.split('.')
-            infofilelist.append(item[0].upper())
+
+    infofilelist = [str(file) for file in Path(directory).rglob(f"*") if file.suffix.lower() == f'.{fileformat.lower()}']
+
+    # for item in filelist:
+        # if item.endswith(".%s" % fileformat.lower()):
+            # item = item.split('.')
+            # infofilelist.append(item[0].upper())
     
     # Set dataframe for population
     df_NMEA = pd.DataFrame(columns = ['CTD number', 'Lat','Long','Upload Time','UTC Time'])
     
     # Extract lat, long and timestamps from cnv file        
     for item in infofilelist:
-        file_i_lower = os.path.join(directory,item.lower()+".%s" % fileformat.lower())
-        file_i_upper = os.path.join(directory,item.upper()+".%s" % fileformat.lower())
-        file_i = [file_i_lower, file_i_upper][os.path.exists(file_i_upper)]
-        with open(file_i) as f:
+        # file_i_lower = os.path.join(directory,item.lower()+".%s" % fileformat.lower())
+        # file_i_upper = os.path.join(directory,item.upper()+".%s" % fileformat.lower())
+        # file_i = [file_i_lower, file_i_upper][os.path.exists(file_i_upper)]
+        with open(item) as f:
             latdec = np.nan 
             londec = np.nan
             upload_time = ''
@@ -118,7 +122,7 @@ def get_NMEA_from_header(directory, fileformat):
 
         # Save metadata to dataframe for file
         df_NMEA = pd.concat([df_NMEA, 
-                             pd.DataFrame([[item,latdec,londec,upload_time,utc_time]], 
+                             pd.DataFrame([[Path(item).stem.upper(),latdec,londec,upload_time,utc_time]], 
                                           columns = ['CTD number', 'Lat','Long','Upload Time','UTC Time'])
                              ]
                             )

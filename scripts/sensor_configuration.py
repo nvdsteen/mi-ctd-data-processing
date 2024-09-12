@@ -5,6 +5,7 @@ Created on Tue Mar 26 09:29:53 2024
 @author: dosullivan1
 """
 import os
+from pathlib import Path
 import xml.etree.ElementTree as elementTree
 import pandas as pd 
 from IPython.display import display
@@ -127,11 +128,19 @@ def sensor_config(directory, cruiseID):
     
     df_cast_sensors = pd.DataFrame()
     
-    for file in files:
-        if '.XMLCON' in file.upper():
-            sensor_dict = file_sensor_config(directory, file)
-            df_sensor = pd.DataFrame(sensor_dict, index=[file.lower().replace('.xmlcon','')])
-            df_cast_sensors = pd.concat([df_cast_sensors,df_sensor])
+    # for file in files:
+        # if '.XMLCON' in file.upper():
+            # sensor_dict = file_sensor_config(directory, file)
+            # df_sensor = pd.DataFrame(sensor_dict, index=[file.lower().replace('.xmlcon','')])
+            # df_cast_sensors = pd.concat([df_cast_sensors,df_sensor])
+    sensor_conf_extension = "XMLCON"
+    xmlcon_files = [str(file) for file in Path(directory).rglob(f"*") if file.suffix.lower() == f'.{sensor_conf_extension.lower()}']
+    for fi in xmlcon_files:
+        fi_name = Path(fi).name
+        sensor_dict = file_sensor_config(directory, fi_name)
+        df_sensor = pd.DataFrame(sensor_dict, index=[fi_name.lower().replace('.xmlcon','')])
+        df_cast_sensors = pd.concat([df_cast_sensors,df_sensor])
+
     
     # Find where the sensors were swapped
     label0 = df_cast_sensors.drop_duplicates(keep='first').T.columns.tolist()
