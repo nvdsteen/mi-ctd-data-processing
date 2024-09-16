@@ -614,6 +614,28 @@ class bokeh_layout:
                       line_width=1,
                      )
         self.pressure_sigma = pressure_sigma
+
+        oxygen_sat = figure(x_axis_label='Oxygen saturation [%]',
+                    y_axis_label='Depth [m]',
+                    x_axis_location="above",
+                    y_range=self.depth_temperature.y_range,
+                    tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+                    toolbar_location='above',
+                    output_backend='webgl',
+                   )
+        oxygen_sat.scatter('oxy_sat', 'depth',
+                      source = self.col_src_bin,
+                      color='green',
+                      line_alpha=1,
+                      line_width=1,
+                      )
+        oxygen_sat.line('oxy_sat', 'depth',
+                      source = self.col_src_bin,
+                      color='green',
+                      line_alpha=1,
+                      line_width=1,
+                     )
+        self.oxygen_sat = oxygen_sat
         
         # Set up T-S plot settings
         ts_plot = figure(x_axis_label='Salinity [dimensionless]',
@@ -778,7 +800,8 @@ class bokeh_layout:
                                       self.depth_conductivity,
                                       self.depth_salinity,
                                       self.pressure_oxygen,
-                                      self.pressure_sigma,],ncols=5,width=250,height=450,),),
+                                      self.pressure_sigma,
+                                      self.oxygen_sat],ncols=6,width=250,height=450,),),
                         row(Spacer(width=300),self.x_axis_filter),
                         row(self.survey_map,
                             gridplot([self.temp_section,
