@@ -440,14 +440,17 @@ class bokeh_layout:
         # Define the ColumnDataSource for the profile plots
         if self.sensor_suite.active==0:
             suite = ['CTD number','Latitude [degrees_north]','Longitude [degrees_east]','Eastings','Northings','CTD_start',
-                     'depSM','prDM','t090C','c0S/m','sal00','potemp090C','sigma-theta00','svel00','sbeox0Mm/L','sbeox0PS']
+                    #  'depSM','prDM','t090C','c0S/m','sal00','potemp090C','sigma-theta00','svel00','sbeox0Mm/L','sbeox0PS']
+                     'depSM','prDM','t090C','c0S/m','sal00','potemp090C','sigma-theta00','svel00','sbeox0Mm/L','sbeox0PS', 'TurbidityMeter_0']
         elif self.sensor_suite.active==1:
             suite = ['CTD number','Latitude [degrees_north]','Longitude [degrees_east]','Eastings','Northings','CTD_start',
-                     'depSM','prDM','t190C','c1S/m','sal11','potemp190C','sigma-theta11','svel11','sbeox1Mm/L','sbeox1PS']
+                    #  'depSM','prDM','t190C','c1S/m','sal11','potemp190C','sigma-theta11','svel11','sbeox1Mm/L','sbeox1PS']
+                     'depSM','prDM','t190C','c1S/m','sal11','potemp190C','sigma-theta11','svel11','sbeox1Mm/L','sbeox1PS', 'TurbidityMeter_0']
         
         self.suite = suite
         self.renamed = ['CTD number','Latitude [degrees_north]','Longitude [degrees_east]','Eastings','Northings','Date',
-                   'depth','pres','temp','cond','sal','potemp','sigma-theta','svel','oxy_conc','oxy_sat']
+                #    'depth','pres','temp','cond','sal','potemp','sigma-theta','svel','oxy_conc','oxy_sat']
+                   'depth','pres','temp','cond','sal','potemp','sigma-theta','svel','oxy_conc','oxy_sat', "TurbidityMeter_0"]
         
         df_st = self.profile_data[self.profile_data['CTD number']==self.profile.value][self.suite].copy(deep=True)
         df_st.columns = self.renamed
@@ -636,7 +639,28 @@ class bokeh_layout:
                       line_width=1,
                      )
         self.oxygen_sat = oxygen_sat
-        
+        turbidity = figure(x_axis_label='Turbidity',
+                    y_axis_label='Depth [m]',
+                    x_axis_location="above",
+                    y_range=self.depth_temperature.y_range,
+                    tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+                    toolbar_location='above',
+                    output_backend='webgl',
+                   )
+        turbidity.scatter('TurbidityMeter_0', 'depth',
+                      source = self.col_src_bin,
+                      color='green',
+                      line_alpha=1,
+                      line_width=1,
+                      )
+        turbidity.line('TurbidityMeter_0', 'depth',
+                      source = self.col_src_bin,
+                      color='green',
+                      line_alpha=1,
+                      line_width=1,
+                     )
+        self.turbidity = turbidity
+
         # Set up T-S plot settings
         ts_plot = figure(x_axis_label='Salinity [dimensionless]',
                      y_axis_label='Temperature [degC]',
@@ -758,10 +782,10 @@ class bokeh_layout:
         # Update the ColumnDataSource for the profile plots
         if self.sensor_suite.active==0:
             suite = ['CTD number','Latitude [degrees_north]','Longitude [degrees_east]','Eastings','Northings','CTD_start',
-                     'depSM','prDM','t090C','c0S/m','sal00','potemp090C','sigma-theta00','svel00','sbeox0Mm/L','sbeox0PS']
+                     'depSM','prDM','t090C','c0S/m','sal00','potemp090C','sigma-theta00','svel00','sbeox0Mm/L','sbeox0PS', 'TurbidityMeter_0']
         elif self.sensor_suite.active==1:
             suite = ['CTD number','Latitude [degrees_north]','Longitude [degrees_east]','Eastings','Northings','CTD_start',
-                     'depSM','prDM','t190C','c1S/m','sal11','potemp190C','sigma-theta11','svel11','sbeox1Mm/L','sbeox1PS']
+                     'depSM','prDM','t190C','c1S/m','sal11','potemp190C','sigma-theta11','svel11','sbeox1Mm/L','sbeox1PS', 'TurbidityMeter_0']
         
         df_st_updated = self.profile_data[self.profile_data['CTD number']==self.profile.value][suite].copy(deep=True)
         df_st_updated.columns = self.renamed
@@ -801,7 +825,11 @@ class bokeh_layout:
                                       self.depth_salinity,
                                       self.pressure_oxygen,
                                       self.pressure_sigma,
-                                      self.oxygen_sat],ncols=6,width=250,height=450,),),
+                                    self.oxygen_sat,
+                                    self.turbidity
+                                      ],
+                                    #  ncols=5,width=250,height=450,),),
+                                     ncols=7,width=250,height=450,),),
                         row(Spacer(width=300),self.x_axis_filter),
                         row(self.survey_map,
                             gridplot([self.temp_section,
