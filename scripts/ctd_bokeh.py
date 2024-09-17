@@ -930,8 +930,8 @@ class bokeh_layout:
             field_name="temp",
             palette=Viridis256,
             low=self.col_src_ts.data["temp"].min(),  # type: ignore
-            high=self.col_src_ts.data["temp"].max(),
-        )  # type: ignore
+            high=self.col_src_ts.data["temp"].max(), # type: ignore
+        )
         temperature_color_bar = ColorBar(
             color_mapper=temperature_color_mapper["transform"],
             width=30,
@@ -963,8 +963,8 @@ class bokeh_layout:
             field_name="sal",
             palette=Viridis256,
             low=self.col_src_ts.data["sal"].min(),  # type: ignore
-            high=self.col_src_ts.data["sal"].max(),
-        )  # type: ignore
+            high=self.col_src_ts.data["sal"].max(), # type: ignore
+        )
         salinity_color_bar = ColorBar(
             color_mapper=salinity_color_mapper["transform"],
             width=30,
@@ -996,8 +996,8 @@ class bokeh_layout:
             field_name="oxy_conc",
             palette=Viridis256,
             low=self.col_src_ts.data["oxy_conc"].min(),  # type: ignore
-            high=self.col_src_ts.data["oxy_conc"].max(),
-        )  # type: ignore
+            high=self.col_src_ts.data["oxy_conc"].max(), # type: ignore
+        )
         doxy_color_bar = ColorBar(
             color_mapper=doxy_color_mapper["transform"],
             width=30,
@@ -1019,12 +1019,11 @@ class bokeh_layout:
     # Add update functions
     def update_binning_plot(self, attr, old, new):
         # Update the ColumnDataSource for the profile plots
-
-        df_st_updated = self.profile_data[
+        df_st_updated = self.profile_data.loc[
             self.profile_data["CTD number"] == self.profile.value
-        ][list(self.get_suite_dict().values())].copy(deep=True)
+        , list(self.get_suite_dict().values())].copy(deep=True)
         df_st_updated = df_st_updated.rename(
-            columns={v: k for k, v in self.get_suite_dict()}
+            columns={v: k for k, v in self.get_suite_dict().items()}
         )
         src_updated = ColumnDataSource(df_st_updated)
         self.col_src_bin.data.update(src_updated.data)
@@ -1032,7 +1031,7 @@ class bokeh_layout:
         self.update_button_avail()
 
         # Update ColumnDataSource for T-S plot
-        df_ts_updated = self.profile_data[list(self.get_suite_dict().values())].copy(
+        df_ts_updated = self.profile_data.loc[:, list(self.get_suite_dict().values())].copy(
             deep=True
         )
         df_ts_updated = df_ts_updated.rename(
