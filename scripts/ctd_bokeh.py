@@ -1385,11 +1385,24 @@ class bokeh_layout:
                 line_alpha=1,
                 line_width=1,
             )
-        legend_items = [LegendItem(label=label_list[i], renderers=[renderer for renderer in renderer_list if renderer.glyph.line_color == color]) for i, color in enumerate(color_list)]
+        legend_items = [
+            LegendItem(
+                label=label_list[i],
+                renderers=[
+                    renderer
+                    for renderer in renderer_list
+                    if renderer.glyph.line_color == color
+                ],
+            )
+            for i, color in enumerate(color_list)
+        ]
 
         ## Use a dummy figure for the LEGEND
         dum_fig = figure(
-            width=1000, height=50, outline_line_alpha=0, toolbar_location=None, 
+            width=1000,
+            height=50,
+            outline_line_alpha=0,
+            toolbar_location=None,
         )
         # set the components of the figure invisible
         for fig_component in [
@@ -1658,21 +1671,6 @@ class bokeh_layout:
                     width=230,
                     height=450,
                 ),
-            ),
-            row(Spacer(width=300), self.x_axis_filter),
-            row(
-                self.survey_map,
-                gridplot(
-                    [
-                        self.temp_section,
-                        self.sal_section,
-                        self.doxy_section,
-                    ],
-                    ncols=1,
-                    width=600,
-                    height=200,
-                ),
-                self.ts_plot,
             ),
         )
         self.visualisation_layout = layout
