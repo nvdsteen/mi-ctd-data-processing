@@ -1389,7 +1389,7 @@ class bokeh_layout:
 
         ## Use a dummy figure for the LEGEND
         dum_fig = figure(
-            width=500, height=150, outline_line_alpha=0, toolbar_location=None
+            width=1000, height=50, outline_line_alpha=0, toolbar_location=None, 
         )
         # set the components of the figure invisible
         for fig_component in [
@@ -1407,6 +1407,7 @@ class bokeh_layout:
         # add the legend
         dum_fig.add_layout(
             Legend(
+                orientation="horizontal",
                 click_policy="hide",
                 location="top_left",
                 border_line_alpha=0,
@@ -1628,13 +1629,13 @@ class bokeh_layout:
 
         # Define dashboard layout
         layout = column(
-            row(self.legend_fig),
             row(
                 Spacer(width=40 + 50 + 150 + 50 + 150),
                 self.sensor_suite,
                 Spacer(width=50),
                 self.screen_print,
             ),
+            row(self.legend_fig),
             row(
                 gridplot(
                     [
