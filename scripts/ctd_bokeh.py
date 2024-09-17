@@ -528,6 +528,29 @@ class bokeh_layout:
 
         doc.add_root(layout)
 
+    def get_suite_dict(self):
+        sensor_suffix = "0" if self.sensor_suite.active == 0 else "1"
+        suite_dict = {
+            "CTD number": "CTD number",
+            "Latitude [degrees_north]": "Latitude [degrees_north]",
+            "Longitude [degrees_east]": "Longitude [degrees_east]",
+            "Eastings": "Eastings",
+            "Northings": "Northings",
+            "Date": "CTD_start",
+            "depth": "depSM",
+            "pres": "prDM",
+            "TurbidityMeter_0": "TurbidityMeter_0",
+            "temp": f"t{sensor_suffix}90C",
+            "cond": f"c{sensor_suffix}S/m",
+            "sal": f"sal{sensor_suffix}0",
+            "potemp": f"potemp{sensor_suffix}90C",
+            "sigma-theta": f"sigma-theta{sensor_suffix}0",
+            "svel": f"svel{sensor_suffix}0",
+            "oxy_conc": f"sbeox{sensor_suffix}Mm/L",
+            "oxy_sat": f"sbeox{sensor_suffix}PS",
+        }
+        return suite_dict
+
     def bin_data(self):
         # Set heave plot widgets
         self.profile.value = self.profile_list[0]
@@ -548,75 +571,15 @@ class bokeh_layout:
         )
 
         # Define the ColumnDataSource for the profile plots
-        if self.sensor_suite.active == 0:
-            suite = [
-                "CTD number",
-                "Latitude [degrees_north]",
-                "Longitude [degrees_east]",
-                "Eastings",
-                "Northings",
-                "CTD_start",
-                #  'depSM','prDM','t090C','c0S/m','sal00','potemp090C','sigma-theta00','svel00','sbeox0Mm/L','sbeox0PS']
-                "depSM",
-                "prDM",
-                "t090C",
-                "c0S/m",
-                "sal00",
-                "potemp090C",
-                "sigma-theta00",
-                "svel00",
-                "sbeox0Mm/L",
-                "sbeox0PS",
-                "TurbidityMeter_0",
-            ]
-        elif self.sensor_suite.active == 1:
-            suite = [
-                "CTD number",
-                "Latitude [degrees_north]",
-                "Longitude [degrees_east]",
-                "Eastings",
-                "Northings",
-                "CTD_start",
-                #  'depSM','prDM','t190C','c1S/m','sal11','potemp190C','sigma-theta11','svel11','sbeox1Mm/L','sbeox1PS']
-                "depSM",
-                "prDM",
-                "t190C",
-                "c1S/m",
-                "sal11",
-                "potemp190C",
-                "sigma-theta11",
-                "svel11",
-                "sbeox1Mm/L",
-                "sbeox1PS",
-                "TurbidityMeter_0",
-            ]
 
-        self.suite = suite
-        self.renamed = [
-            "CTD number",
-            "Latitude [degrees_north]",
-            "Longitude [degrees_east]",
-            "Eastings",
-            "Northings",
-            "Date",
-            #    'depth','pres','temp','cond','sal','potemp','sigma-theta','svel','oxy_conc','oxy_sat']
-            "depth",
-            "pres",
-            "temp",
-            "cond",
-            "sal",
-            "potemp",
-            "sigma-theta",
-            "svel",
-            "oxy_conc",
-            "oxy_sat",
-            "TurbidityMeter_0",
-        ]
+        self.suite = list(self.get_suite_dict().values())
+
+        # self.renamed = list(suite_dict.keys())
 
         df_st = self.profile_data[
             self.profile_data["CTD number"] == self.profile.value
         ][self.suite].copy(deep=True)
-        df_st.columns = self.renamed
+        df_st = df_st.rename(columns={v: k for k, v in self.get_suite_dict().items()})
 
         self.col_src_bin = ColumnDataSource(df_st)
         self.col_src_metadata = ColumnDataSource(
@@ -625,7 +588,7 @@ class bokeh_layout:
 
         # Define ColumnDataSource for T-S plot
         df_ts = self.profile_data[self.suite].copy(deep=True)
-        df_ts.columns = self.renamed
+        df_ts = df_ts.rename(columns={v: k for k, v in self.get_suite_dict().items()})
         df_ts["SectionX"] = df_ts[self.x_axis_filter.value]
         self.col_src_ts = ColumnDataSource(df_ts)
 
@@ -1056,59 +1019,25 @@ class bokeh_layout:
     # Add update functions
     def update_binning_plot(self, attr, old, new):
         # Update the ColumnDataSource for the profile plots
-        if self.sensor_suite.active == 0:
-            suite = [
-                "CTD number",
-                "Latitude [degrees_north]",
-                "Longitude [degrees_east]",
-                "Eastings",
-                "Northings",
-                "CTD_start",
-                "depSM",
-                "prDM",
-                "t090C",
-                "c0S/m",
-                "sal00",
-                "potemp090C",
-                "sigma-theta00",
-                "svel00",
-                "sbeox0Mm/L",
-                "sbeox0PS",
-                "TurbidityMeter_0",
-            ]
-        elif self.sensor_suite.active == 1:
-            suite = [
-                "CTD number",
-                "Latitude [degrees_north]",
-                "Longitude [degrees_east]",
-                "Eastings",
-                "Northings",
-                "CTD_start",
-                "depSM",
-                "prDM",
-                "t190C",
-                "c1S/m",
-                "sal11",
-                "potemp190C",
-                "sigma-theta11",
-                "svel11",
-                "sbeox1Mm/L",
-                "sbeox1PS",
-                "TurbidityMeter_0",
-            ]
 
         df_st_updated = self.profile_data[
             self.profile_data["CTD number"] == self.profile.value
-        ][suite].copy(deep=True)
-        df_st_updated.columns = self.renamed
+        ][list(self.get_suite_dict().values())].copy(deep=True)
+        df_st_updated = df_st_updated.rename(
+            columns={v: k for k, v in self.get_suite_dict()}
+        )
         src_updated = ColumnDataSource(df_st_updated)
         self.col_src_bin.data.update(src_updated.data)
 
         self.update_button_avail()
 
         # Update ColumnDataSource for T-S plot
-        df_ts_updated = self.profile_data[suite].copy(deep=True)
-        df_ts_updated.columns = self.renamed
+        df_ts_updated = self.profile_data[list(self.get_suite_dict().values())].copy(
+            deep=True
+        )
+        df_ts_updated = df_ts_updated.rename(
+            columns={v: k for k, v in self.get_suite_dict().items()}
+        )
         df_ts_updated["SectionX"] = df_ts_updated[self.x_axis_filter.value]
         src_ts_updated = ColumnDataSource(df_ts_updated)
         self.col_src_ts.data.update(src_ts_updated.data)
