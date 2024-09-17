@@ -18,11 +18,12 @@ from bokeh.models import (
     RadioGroup,
     BoxAnnotation,
     Label,
+    LegendItem,
 )
 from bokeh.layouts import row, column, Spacer, gridplot
 from bokeh.plotting import figure, save, output_file
 from bokeh.transform import linear_cmap
-from bokeh.palettes import Viridis256
+from bokeh.palettes import Viridis256, Category10
 
 # Import bespoke functions
 import scripts.calculations as calculations
@@ -930,7 +931,7 @@ class bokeh_layout:
             field_name="temp",
             palette=Viridis256,
             low=self.col_src_ts.data["temp"].min(),  # type: ignore
-            high=self.col_src_ts.data["temp"].max(), # type: ignore
+            high=self.col_src_ts.data["temp"].max(),  # type: ignore
         )
         temperature_color_bar = ColorBar(
             color_mapper=temperature_color_mapper["transform"],
@@ -963,7 +964,7 @@ class bokeh_layout:
             field_name="sal",
             palette=Viridis256,
             low=self.col_src_ts.data["sal"].min(),  # type: ignore
-            high=self.col_src_ts.data["sal"].max(), # type: ignore
+            high=self.col_src_ts.data["sal"].max(),  # type: ignore
         )
         salinity_color_bar = ColorBar(
             color_mapper=salinity_color_mapper["transform"],
@@ -996,7 +997,7 @@ class bokeh_layout:
             field_name="oxy_conc",
             palette=Viridis256,
             low=self.col_src_ts.data["oxy_conc"].min(),  # type: ignore
-            high=self.col_src_ts.data["oxy_conc"].max(), # type: ignore
+            high=self.col_src_ts.data["oxy_conc"].max(),  # type: ignore
         )
         doxy_color_bar = ColorBar(
             color_mapper=doxy_color_mapper["transform"],
@@ -1020,8 +1021,9 @@ class bokeh_layout:
     def update_binning_plot(self, attr, old, new):
         # Update the ColumnDataSource for the profile plots
         df_st_updated = self.profile_data.loc[
-            self.profile_data["CTD number"] == self.profile.value
-        , list(self.get_suite_dict().values())].copy(deep=True)
+            self.profile_data["CTD number"] == self.profile.value,
+            list(self.get_suite_dict().values()),
+        ].copy(deep=True)
         df_st_updated = df_st_updated.rename(
             columns={v: k for k, v in self.get_suite_dict().items()}
         )
@@ -1031,9 +1033,9 @@ class bokeh_layout:
         self.update_button_avail()
 
         # Update ColumnDataSource for T-S plot
-        df_ts_updated = self.profile_data.loc[:, list(self.get_suite_dict().values())].copy(
-            deep=True
-        )
+        df_ts_updated = self.profile_data.loc[
+            :, list(self.get_suite_dict().values())
+        ].copy(deep=True)
         df_ts_updated = df_ts_updated.rename(
             columns={v: k for k, v in self.get_suite_dict().items()}
         )
@@ -1062,6 +1064,573 @@ class bokeh_layout:
                 self.profile,
                 self.next_profile,
                 Spacer(width=150),
+                self.sensor_suite,
+                Spacer(width=50),
+                self.screen_print,
+            ),
+            row(
+                gridplot(
+                    [
+                        self.depth_temperature,
+                        self.depth_conductivity,
+                        self.depth_salinity,
+                        self.pressure_oxygen,
+                        self.pressure_sigma,
+                    ],
+                    ncols=5,
+                    width=250,
+                    height=450,
+                ),
+            ),
+            row(
+                Spacer(width=395),
+                gridplot(
+                    [self.oxygen_sat, self.turbidity],
+                    ncols=2,
+                    width=230,
+                    height=450,
+                ),
+            ),
+            row(Spacer(width=300), self.x_axis_filter),
+            row(
+                self.survey_map,
+                gridplot(
+                    [
+                        self.temp_section,
+                        self.sal_section,
+                        self.doxy_section,
+                    ],
+                    ncols=1,
+                    width=600,
+                    height=200,
+                ),
+                self.ts_plot,
+            ),
+        )
+        self.visualisation_layout = layout
+        # Add layout to document
+        doc.add_root(layout)
+
+    def bin_data_overlay(self):
+        self.screen_print = Button(
+            label="Save as HTML",
+            button_type="default",
+            width=50,
+            disabled=False,
+        )
+        self.sensor_suite = RadioGroup(
+            labels=["primary", "secondary"],
+            active=0,
+        )
+        self.x_axis_filter = Select(
+            options=["Longitude [degrees_east]", "Latitude [degrees_north]", "Date"],
+            value="Longitude [degrees_east]",
+        )
+
+        # Define the ColumnDataSource for the profile plots
+
+        self.suite = list(self.get_suite_dict().values())
+
+        # self.renamed = list(suite_dict.keys())
+
+        df_st = self.profile_data[self.suite].copy(deep=True)
+        df_st = df_st.rename(columns={v: k for k, v in self.get_suite_dict().items()})
+
+        self.col_src_bin = ColumnDataSource(df_st)
+        self.col_src_metadata = ColumnDataSource(
+            self.profile_data[["CTD number", "Eastings", "Northings"]].drop_duplicates()
+        )
+
+        # Define ColumnDataSource for T-S plot
+        df_ts = self.profile_data[self.suite].copy(deep=True)
+        df_ts = df_ts.rename(columns={v: k for k, v in self.get_suite_dict().items()})
+        df_ts["SectionX"] = df_ts[self.x_axis_filter.value]
+        self.col_src_ts = ColumnDataSource(df_ts)
+
+        # Map plot
+        survey_map = figure(
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            x_axis_type="mercator",
+            y_axis_type="mercator",
+            width=300,
+            height=300,
+            toolbar_location="above",
+            output_backend="webgl",
+        )
+        survey_map.add_tile("CartoDB Positron", retina=True)
+        survey_map.xaxis.axis_label = "Longitude [degrees E]"
+        survey_map.yaxis.axis_label = "Latitude [degrees N]"
+
+        survey_map.scatter(
+            x="Eastings",
+            y="Northings",
+            size=5,
+            fill_color="blue",
+            fill_alpha=0.5,
+            source=self.col_src_ts,
+        )
+
+        survey_map.scatter(
+            x="Eastings",
+            y="Northings",
+            size=5,
+            fill_color="red",
+            fill_alpha=1.0,
+            selection_fill_color="red",
+            source=self.col_src_bin,
+        )
+
+        self.survey_map = survey_map
+
+        # Set up depth vs temperature plot settings
+        depth_temperature = figure(
+            x_axis_label="Temperature [degC]",
+            y_axis_label="Depth [m]",
+            x_axis_location="above",
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            toolbar_location="above",
+            y_range=DataRange1d(flipped=True),
+            output_backend="webgl",
+        )
+        depth_temperature.y_range.flipped = True
+
+        # Set up depth vs conductivity plot settings
+        depth_conductivity = figure(
+            x_axis_label="Conductivity [S/m]",
+            y_axis_label="Depth [m]",
+            x_axis_location="above",
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            toolbar_location="above",
+            output_backend="webgl",
+        )
+
+        # Set up depth vs salinity plot settings
+        depth_salinity = figure(
+            x_axis_label="Salinity [dimensionless]",
+            y_axis_label="Depth [m]",
+            x_axis_location="above",
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            toolbar_location="above",
+            output_backend="webgl",
+        )
+
+        # Set up pressure vs oxygen conc plot settings
+        pressure_oxygen = figure(
+            x_axis_label="Oxygen [umol/L]",
+            y_axis_label="Depth [m]",
+            x_axis_location="above",
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            toolbar_location="above",
+            output_backend="webgl",
+        )
+
+        # Set up pressure vs sigma-theta plot settings
+        pressure_sigma = figure(
+            x_axis_label="SigmaTheta [kg/m^3]",
+            y_axis_label="Depth [m]",
+            x_axis_location="above",
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            toolbar_location="above",
+            output_backend="webgl",
+        )
+
+        oxygen_sat = figure(
+            x_axis_label="Oxygen saturation [%]",
+            y_axis_label="Depth [m]",
+            x_axis_location="above",
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            toolbar_location="above",
+            output_backend="webgl",
+        )
+
+        turbidity = figure(
+            x_axis_label="Turbidity",
+            y_axis_label="Depth [m]",
+            x_axis_location="above",
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            toolbar_location="above",
+            output_backend="webgl",
+        )
+
+        # Add data to plot
+        palette = Category10[10]
+        renderer_list = []
+        color_list = []
+        label_list = []
+        for i, cast_i in enumerate(self.profile_data["CTD number"].unique()):
+            label_list += [cast_i]
+            color_i = palette[i]
+            color_list += [color_i]
+            data_i = self.profile_data.loc[
+                self.profile_data["CTD number"] == cast_i, self.suite
+            ]
+            data_i = data_i.rename(
+                columns={v: k for k, v in self.get_suite_dict().items()}
+            )
+            source_i = ColumnDataSource(data_i)
+            depth_temperature.scatter(
+                "temp",
+                "depth",
+                source=source_i,
+                color=color_i,
+                # color="green",
+                fill_alpha=0.2,
+                size=5,
+                # legend_label=cast_i,
+            )
+            li = depth_temperature.line(
+                "temp",
+                "depth",
+                source=source_i,
+                color=color_i,
+                line_alpha=1,
+                line_width=0.5,
+            )
+            renderer_list += [li]
+            # Add data to plot
+            depth_salinity.scatter(
+                "sal",
+                "depth",
+                source=source_i,
+                color=color_i,
+                fill_alpha=0.2,
+                size=5,
+            )
+            depth_salinity.line(
+                "sal",
+                "depth",
+                source=source_i,
+                color=color_i,
+                line_alpha=1,
+                line_width=0.5,
+            )
+            pressure_oxygen.scatter(
+                "oxy_conc",
+                "depth",
+                source=source_i,
+                color=color_i,
+                fill_alpha=0.2,
+                size=5,
+            )
+            pressure_oxygen.line(
+                "oxy_conc",
+                "depth",
+                source=source_i,
+                color=color_i,
+                line_alpha=1,
+                line_width=1,
+            )
+
+            depth_conductivity.scatter(
+                "cond",
+                "depth",
+                source=source_i,
+                color=color_i,
+                fill_alpha=0.2,
+                size=5,
+            )
+            depth_conductivity.line(
+                "cond",
+                "depth",
+                source=source_i,
+                color=color_i,
+                line_alpha=1,
+                line_width=0.5,
+            )
+            pressure_sigma.scatter(
+                "sigma-theta",
+                "depth",
+                source=source_i,
+                color=color_i,
+                fill_alpha=0.2,
+                size=5,
+            )
+            pressure_sigma.line(
+                "sigma-theta",
+                "depth",
+                source=source_i,
+                color=color_i,
+                line_alpha=1,
+                line_width=1,
+            )
+            oxygen_sat.scatter(
+                "oxy_sat",
+                "depth",
+                source=source_i,
+                color=color_i,
+                line_alpha=1,
+                line_width=1,
+            )
+            oxygen_sat.line(
+                "oxy_sat",
+                "depth",
+                source=source_i,
+                color=color_i,
+                line_alpha=1,
+                line_width=1,
+            )
+            turbidity.scatter(
+                "TurbidityMeter_0",
+                "depth",
+                source=source_i,
+                color=color_i,
+                line_alpha=1,
+                line_width=1,
+            )
+            turbidity.line(
+                "TurbidityMeter_0",
+                "depth",
+                source=source_i,
+                color=color_i,
+                line_alpha=1,
+                line_width=1,
+            )
+        legend_items = [LegendItem(label=label_list[i], renderers=[renderer for renderer in renderer_list if renderer.glyph.line_color == color]) for i, color in enumerate(color_list)]
+
+        ## Use a dummy figure for the LEGEND
+        dum_fig = figure(
+            width=500, height=150, outline_line_alpha=0, toolbar_location=None
+        )
+        # set the components of the figure invisible
+        for fig_component in [
+            dum_fig.grid[0],
+            dum_fig.ygrid[0],
+            dum_fig.xaxis[0],
+            dum_fig.yaxis[0],
+        ]:
+            fig_component.visible = False
+        # The glyphs referred by the legend need to be present in the figure that holds the legend, so we must add them to the figure renderers
+        dum_fig.renderers += renderer_list  # type: ignore
+        # set the figure range outside of the range of all glyphs
+        dum_fig.x_range.end = 1005
+        dum_fig.x_range.start = 1000
+        # add the legend
+        dum_fig.add_layout(
+            Legend(
+                click_policy="hide",
+                location="top_left",
+                border_line_alpha=0,
+                items=legend_items,
+            )
+        )
+        self.legend_fig = dum_fig
+
+        for fi in [
+            depth_conductivity,
+            depth_salinity,
+            pressure_oxygen,
+            pressure_sigma,
+            oxygen_sat,
+            turbidity,
+        ]:
+            fi.y_range = depth_temperature.y_range
+
+        self.depth_temperature = depth_temperature
+        self.depth_conductivity = depth_conductivity
+        self.depth_salinity = depth_salinity
+        self.pressure_oxygen = pressure_oxygen
+        self.pressure_sigma = pressure_sigma
+        self.oxygen_sat = oxygen_sat
+        self.turbidity = turbidity
+
+        # Set up T-S plot settings
+        ts_plot = figure(
+            x_axis_label="Salinity [dimensionless]",
+            y_axis_label="Temperature [degC]",
+            x_axis_location="below",
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            toolbar_location="above",
+            width=400,
+            height=450,
+            output_backend="webgl",
+        )
+        # Set linear colour mapping
+        mapper = linear_cmap(
+            field_name="oxy_conc",
+            palette=Viridis256,
+            low=self.col_src_ts.data["oxy_conc"].min(),  # type: ignore
+            high=self.col_src_ts.data["oxy_conc"].max(),  # type: ignore
+        )
+        color_bar = ColorBar(
+            color_mapper=mapper["transform"],
+            width=30,
+            location=(0, 0),
+            title="umol/L",
+        )
+        ts_plot.add_layout(color_bar, "right")
+
+        # Set annotated boxes for water mass descriptions from water_mass_configuration import patch_dict, box_dict
+        for item in patch_dict.keys():
+            ts_plot.patch(
+                patch_dict[item]["patch_coords"][0],
+                patch_dict[item]["patch_coords"][1],
+                line_color="red",
+                line_width=1,
+                alpha=0.5,
+                fill_color="red",
+                fill_alpha=0.1,
+            )
+            ts_plot.add_layout(
+                Label(
+                    x=patch_dict[item]["label_coords"][0],
+                    y=patch_dict[item]["label_coords"][1],
+                    x_units="data",
+                    y_units="data",
+                    text=patch_dict[item]["label"],
+                    text_align="center",
+                    text_baseline="middle",
+                )
+            )
+
+        for item in box_dict.keys():
+            top = box_dict[item]["box_coords"]["top"]
+            right = box_dict[item]["box_coords"]["right"]
+            bottom = box_dict[item]["box_coords"]["bottom"]
+            left = box_dict[item]["box_coords"]["left"]
+            ts_plot.add_layout(
+                BoxAnnotation(
+                    top=top,
+                    bottom=bottom,
+                    left=left,
+                    right=right,
+                    line_color="red",
+                    line_width=1,
+                    line_alpha=0.5,
+                    fill_color="red",
+                    fill_alpha=0.1,
+                )
+            )
+            ts_plot.add_layout(
+                Label(
+                    x=box_dict[item]["label_coords"][0],
+                    y=box_dict[item]["label_coords"][1],
+                    x_units="data",
+                    y_units="data",
+                    text=box_dict[item]["label"],
+                    text_align="center",
+                    text_baseline="middle",
+                )
+            )
+
+        # Add data to plot
+        ts_plot.scatter(
+            "sal",
+            "temp",
+            source=self.col_src_ts,
+            color=mapper,
+            fill_alpha=0.2,
+            size=5,
+        )
+        self.ts_plot = ts_plot
+
+        # Set up plot figure for section
+        temp_section = figure(
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            x_axis_location="above",
+            y_axis_label="Depth [m]",
+            y_range=DataRange1d(flipped=True),
+            output_backend="webgl",
+        )
+        # Set linear colour mapping for temperature
+        temperature_color_mapper = linear_cmap(
+            field_name="temp",
+            palette=Viridis256,
+            low=self.col_src_ts.data["temp"].min(),  # type: ignore
+            high=self.col_src_ts.data["temp"].max(),  # type: ignore
+        )
+        temperature_color_bar = ColorBar(
+            color_mapper=temperature_color_mapper["transform"],
+            width=30,
+            location=(0, 0),
+            title="degrees C",
+        )
+        temp_section.add_layout(temperature_color_bar, "right")
+        # Add data to plot
+        temp_section.scatter(
+            "SectionX",
+            "depth",
+            source=self.col_src_ts,
+            color=temperature_color_mapper,
+            fill_alpha=0.2,
+            size=5,
+        )
+        self.temp_section = temp_section
+
+        # Set up plot figure for salinity section
+        sal_section = figure(
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            x_axis_location="above",
+            y_axis_label="Depth [m]",
+            y_range=DataRange1d(flipped=True),
+            output_backend="webgl",
+        )
+        # Set linear colour mapping for salinity
+        salinity_color_mapper = linear_cmap(
+            field_name="sal",
+            palette=Viridis256,
+            low=self.col_src_ts.data["sal"].min(),  # type: ignore
+            high=self.col_src_ts.data["sal"].max(),  # type: ignore
+        )
+        salinity_color_bar = ColorBar(
+            color_mapper=salinity_color_mapper["transform"],
+            width=30,
+            location=(0, 0),
+            title="PSU",
+        )
+        sal_section.add_layout(salinity_color_bar, "right")
+        # Add data to plot
+        sal_section.scatter(
+            "SectionX",
+            "depth",
+            source=self.col_src_ts,
+            color=salinity_color_mapper,
+            fill_alpha=0.2,
+            size=5,
+        )
+        self.sal_section = sal_section
+
+        # Set up plot figure for dissolved oxyen section
+        doxy_section = figure(
+            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+            x_axis_location="above",
+            y_axis_label="Depth [m]",
+            y_range=DataRange1d(flipped=True),
+            output_backend="webgl",
+        )
+        # Set linear colour mapping
+        doxy_color_mapper = linear_cmap(
+            field_name="oxy_conc",
+            palette=Viridis256,
+            low=self.col_src_ts.data["oxy_conc"].min(),  # type: ignore
+            high=self.col_src_ts.data["oxy_conc"].max(),  # type: ignore
+        )
+        doxy_color_bar = ColorBar(
+            color_mapper=doxy_color_mapper["transform"],
+            width=30,
+            location=(0, 0),
+            title="umol/L",
+        )
+        doxy_section.add_layout(doxy_color_bar, "right")
+        # Add data to plot
+        doxy_section.scatter(
+            "SectionX",
+            "depth",
+            source=self.col_src_ts,
+            color=doxy_color_mapper,
+            fill_alpha=0.2,
+            size=5,
+        )
+        self.doxy_section = doxy_section
+
+    def bin_screen_overlay(self, doc):
+
+        self.bin_data_overlay()
+
+        # Define dashboard layout
+        layout = column(
+            row(self.legend_fig),
+            row(
+                Spacer(width=40 + 50 + 150 + 50 + 150),
                 self.sensor_suite,
                 Spacer(width=50),
                 self.screen_print,
