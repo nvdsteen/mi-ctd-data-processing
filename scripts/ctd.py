@@ -5,7 +5,6 @@ Created on Wed Mar 13 10:49:45 2024
 @author: dosullivan1
 """
 import os
-import numpy as np
 import pandas as pd
 import chevron
 from typing import Dict, List
@@ -104,17 +103,17 @@ class CTD_Data:
         self.instrumentPath=os.path.join(rawFileDirectory,xmlCon)
      
         # Logic to create different PSA files        
-        self.df['headerANDblMissing']=np.logical_and(np.logical_and(self.df['hdr'] == 0,self.df['bl'] == 0),np.logical_and(self.df['hex'] == 1, self.df['xmlcon'] == 1))
-        self.df['blMissing']=np.logical_and(np.logical_and(self.df['hdr'] == 1,self.df['bl'] == 0),np.logical_and(self.df['hex'] == 1, self.df['xmlcon'] == 1))
-        self.df['headerMissing']=np.logical_and(np.logical_and(self.df['hdr'] == 0,self.df['bl'] == 1),np.logical_and(self.df['hex'] == 1, self.df['xmlcon'] == 1))
-        self.df['headerANDblPresent']=np.logical_and(np.logical_and(self.df['hdr'] == 1,self.df['bl'] == 1),np.logical_and(self.df['hex'] == 1, self.df['xmlcon'] == 1))
+        self.df['headerANDblMissing']=((self.df['hdr'] == 0) & (self.df['bl'] == 0) & (self.df['hex'] == 1) & (self.df['xmlcon'] == 1))
+        self.df['blMissing']=((self.df['hdr'] == 1) & (self.df['bl'] == 0) & (self.df["hex"] == 1) & (self.df['xmlcon'] == 1))
+        self.df['headerMissing']=((self.df['hdr'] == 0) & (self.df['bl'] == 1) & (self.df['hex'] == 1) & (self.df['xmlcon'] == 1))
+        self.df['headerANDblPresent']=((self.df['hdr'] == 1) & (self.df['bl'] == 1) & (self.df['hex'] == 1) & (self.df['xmlcon'] == 1))
         self.df['blPresent']= self.df['bl'] == 1
         self.df['btlPresent']= self.df['btl'] == 1
         self.df['cnvPresent']= self.df['cnv'] == 1
         
         # Don't generate PSA if these are not included - display a warning 
-        self.df['hexMissing']=np.logical_and(self.df['hex'] == 0, self.df['xmlcon'] == 1)
-        self.df['xmlconMissing']=np.logical_and(self.df['hex'] == 1, self.df['xmlcon'] == 0)
+        self.df['hexMissing']=((self.df['hex'] == 0) & (self.df['xmlcon'] == 1))
+        self.df['xmlconMissing']=((self.df['hex'] == 1) & (self.df['xmlcon']))
                
         self.headerANDblPresent = self.df[self.df['headerANDblPresent']==True].index.tolist()
         self.headerANDblMissing = self.df[self.df['headerANDblMissing']==True].index.tolist()      
