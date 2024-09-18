@@ -551,6 +551,38 @@ class bokeh_layout:
             "oxy_sat": f"sbeox{sensor_suffix}PS",
         }
         return suite_dict
+    @staticmethod
+    def get_fig_fct_depth(
+        x_axis_label,
+        y_axis_label="Depth [m]",
+        x_axis_location="above",
+        tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
+        toolbar_location="above",
+        output_backend="webgl",
+    ):
+        fig_out = figure(
+            x_axis_label=x_axis_label,
+            y_axis_label=y_axis_label,
+            x_axis_location=x_axis_location,
+            tools=tools,
+            toolbar_location=toolbar_location,
+            output_backend=output_backend,
+        )
+        return fig_out
+
+    @staticmethod
+    def scatter_fct_depth(fig, x, source, color, fill_alpha=0.2, size=5):
+        si = fig.scatter(
+            x, "depth", source=source, color=color, fill_alpha=fill_alpha, size=size
+        )
+        return si
+
+    @staticmethod
+    def line_fct_depth(fig, x, source, color, line_alpha=1, line_width=0.5):
+        li = fig.line(
+            x, "depth", source=source, color=color, line_alpha=line_alpha, line_width=line_width
+        )
+        return li
 
     def bin_data(self):
         # Set heave plot widgets
@@ -629,203 +661,61 @@ class bokeh_layout:
         self.survey_map = survey_map
 
         # Set up depth vs temperature plot settings
-        depth_temperature = figure(
-            x_axis_label="Temperature [degC]",
-            y_axis_label="Depth [m]",
-            x_axis_location="above",
-            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
-            toolbar_location="above",
-            y_range=DataRange1d(flipped=True),
-            output_backend="webgl",
-        )
-        depth_temperature.y_range.flipped = True
-        # Add data to plot
-        depth_temperature.scatter(
-            "temp",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            fill_alpha=0.2,
-            size=5,
-        )
-        depth_temperature.line(
-            "temp",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            line_alpha=1,
-            line_width=0.5,
-        )
+        depth_temperature = self.get_fig_fct_depth(x_axis_label="Temperature [degC]")
+        depth_temperature.y_range = DataRange1d(flipped=True)
+        depth_conductivity = self.get_fig_fct_depth(x_axis_label="Conductivity [S/m]")
+        depth_salinity = self.get_fig_fct_depth(x_axis_label="Salinity [dimensionless]")
+        pressure_oxygen = self.get_fig_fct_depth(x_axis_label="Oxygen [umol/L]")
+        pressure_sigma = self.get_fig_fct_depth(x_axis_label="SigmaTheta [kg/m^3]")
+        oxygen_sat = self.get_fig_fct_depth(x_axis_label="Oxygen saturation [%]")
+        turbidity = self.get_fig_fct_depth(x_axis_label="Turbidity")
+        for fi in [
+            depth_conductivity,
+            depth_salinity,
+            pressure_oxygen,
+            pressure_sigma,
+            oxygen_sat,
+            turbidity,
+        ]:
+            fi.y_range = depth_temperature.y_range
+
+        self.scatter_fct_depth(fig=depth_temperature, x="temp", source=self.col_src_bin, color="green")
+        self.line_fct_depth(fig=depth_temperature, x="temp", source=self.col_src_bin, color="green")
+
         self.depth_temperature = depth_temperature
 
         # Set up depth vs conductivity plot settings
-        depth_conductivity = figure(
-            x_axis_label="Conductivity [S/m]",
-            y_axis_label="Depth [m]",
-            x_axis_location="above",
-            y_range=self.depth_temperature.y_range,
-            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
-            toolbar_location="above",
-            output_backend="webgl",
-        )
-        # Add data to plot
-        depth_conductivity.scatter(
-            "cond",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            fill_alpha=0.2,
-            size=5,
-        )
-        depth_conductivity.line(
-            "cond",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            line_alpha=1,
-            line_width=0.5,
-        )
+        self.scatter_fct_depth(fig=depth_conductivity, x="cond", source=self.col_src_bin, color="green")
+        self.line_fct_depth(fig=depth_conductivity, x="cond", source=self.col_src_bin, color="green")
+
         self.depth_conductivity = depth_conductivity
 
         # Set up depth vs salinity plot settings
-        depth_salinity = figure(
-            x_axis_label="Salinity [dimensionless]",
-            y_axis_label="Depth [m]",
-            x_axis_location="above",
-            y_range=self.depth_temperature.y_range,
-            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
-            toolbar_location="above",
-            output_backend="webgl",
-        )
-        # Add data to plot
-        depth_salinity.scatter(
-            "sal",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            fill_alpha=0.2,
-            size=5,
-        )
-        depth_salinity.line(
-            "sal",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            line_alpha=1,
-            line_width=0.5,
-        )
+        self.scatter_fct_depth(fig=depth_salinity, x="sal", source=self.col_src_bin, color="green")
+        self.line_fct_depth(fig=depth_salinity, x="sal", source=self.col_src_bin, color="green")
 
         self.depth_salinity = depth_salinity
 
         # Set up pressure vs oxygen conc plot settings
-        pressure_oxygen = figure(
-            x_axis_label="Oxygen [umol/L]",
-            y_axis_label="Depth [m]",
-            x_axis_location="above",
-            y_range=self.depth_temperature.y_range,
-            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
-            toolbar_location="above",
-            output_backend="webgl",
-        )
-        # Add data to plot
-        pressure_oxygen.scatter(
-            "oxy_conc",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            fill_alpha=0.2,
-            size=5,
-        )
-        pressure_oxygen.line(
-            "oxy_conc",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            line_alpha=1,
-            line_width=1,
-        )
+        self.scatter_fct_depth(fig=pressure_oxygen, x="oxy_conc", source=self.col_src_bin, color="green")
+        self.line_fct_depth(fig=pressure_oxygen, x="oxy_conc", source=self.col_src_bin, color="green")
+
         self.pressure_oxygen = pressure_oxygen
 
         # Set up pressure vs sigma-theta plot settings
-        pressure_sigma = figure(
-            x_axis_label="SigmaTheta [kg/m^3]",
-            y_axis_label="Depth [m]",
-            x_axis_location="above",
-            y_range=self.depth_temperature.y_range,
-            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
-            toolbar_location="above",
-            output_backend="webgl",
-        )
-        # Add data to plot
-        pressure_sigma.scatter(
-            "sigma-theta",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            fill_alpha=0.2,
-            size=5,
-        )
-        pressure_sigma.line(
-            "sigma-theta",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            line_alpha=1,
-            line_width=1,
-        )
+        self.scatter_fct_depth(fig=pressure_sigma, x="sigma-theta", source=self.col_src_bin, color="green")
+        self.line_fct_depth(fig=pressure_sigma, x="sigma-theta", source=self.col_src_bin, color="green")
+
         self.pressure_sigma = pressure_sigma
 
-        oxygen_sat = figure(
-            x_axis_label="Oxygen saturation [%]",
-            y_axis_label="Depth [m]",
-            x_axis_location="above",
-            y_range=self.depth_temperature.y_range,
-            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
-            toolbar_location="above",
-            output_backend="webgl",
-        )
-        oxygen_sat.scatter(
-            "oxy_sat",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            line_alpha=1,
-            line_width=1,
-        )
-        oxygen_sat.line(
-            "oxy_sat",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            line_alpha=1,
-            line_width=1,
-        )
+        self.scatter_fct_depth(fig=oxygen_sat, x="oxy_sat", source=self.col_src_bin, color="green")
+        self.line_fct_depth(fig=oxygen_sat, x="oxy_sat", source=self.col_src_bin, color="green")
+
         self.oxygen_sat = oxygen_sat
-        turbidity = figure(
-            x_axis_label="Turbidity",
-            y_axis_label="Depth [m]",
-            x_axis_location="above",
-            y_range=self.depth_temperature.y_range,
-            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
-            toolbar_location="above",
-            output_backend="webgl",
-        )
-        turbidity.scatter(
-            "TurbidityMeter_0",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            line_alpha=1,
-            line_width=1,
-        )
-        turbidity.line(
-            "TurbidityMeter_0",
-            "depth",
-            source=self.col_src_bin,
-            color="green",
-            line_alpha=1,
-            line_width=1,
-        )
+
+        self.scatter_fct_depth(fig=turbidity, x="TurbidityMeter_0", source=self.col_src_bin, color="green")
+        self.line_fct_depth(fig=turbidity, x="TurbidityMeter_0", source=self.col_src_bin, color="green")
+
         self.turbidity = turbidity
 
         # Set up T-S plot settings
@@ -1182,55 +1072,19 @@ class bokeh_layout:
 
         self.survey_map = survey_map
 
-        def get_fig_fct_depth(
-            x_axis_label,
-            y_axis_label="Depth [m]",
-            x_axis_location="above",
-            tools="pan,wheel_zoom,box_zoom,box_select,tap,reset",
-            toolbar_location="above",
-            output_backend="webgl",
-        ):
-            fig_out = figure(
-                x_axis_label=x_axis_label,
-                y_axis_label=y_axis_label,
-                x_axis_location=x_axis_location,
-                tools=tools,
-                toolbar_location=toolbar_location,
-                output_backend=output_backend,
-            )
-            return fig_out
 
-        # Set up depth vs temperature plot settings
-        depth_temperature = get_fig_fct_depth(x_axis_label="Temperature [degC]")
+        # Set up depth vs quantity plots
+        depth_temperature = self.get_fig_fct_depth(x_axis_label="Temperature [degC]")
         depth_temperature.y_range = DataRange1d(flipped=True)
 
-        # Set up depth vs conductivity plot settings
-        depth_conductivity = get_fig_fct_depth(x_axis_label="Conductivity [S/m]")
+        depth_conductivity = self.get_fig_fct_depth(x_axis_label="Conductivity [S/m]")
+        depth_salinity = self.get_fig_fct_depth(x_axis_label="Salinity [dimensionless]")
 
-        # Set up depth vs salinity plot settings
-        depth_salinity = get_fig_fct_depth(x_axis_label="Salinity [dimensionless]")
+        pressure_oxygen = self.get_fig_fct_depth(x_axis_label="Oxygen [umol/L]")
+        pressure_sigma = self.get_fig_fct_depth(x_axis_label="SigmaTheta [kg/m^3]")
+        oxygen_sat = self.get_fig_fct_depth(x_axis_label="Oxygen saturation [%]")
+        turbidity = self.get_fig_fct_depth(x_axis_label="Turbidity")
 
-        # Set up pressure vs oxygen conc plot settings
-        pressure_oxygen = get_fig_fct_depth(x_axis_label="Oxygen [umol/L]")
-
-        # Set up pressure vs sigma-theta plot settings
-        pressure_sigma = get_fig_fct_depth(x_axis_label="SigmaTheta [kg/m^3]")
-
-        oxygen_sat = get_fig_fct_depth(x_axis_label="Oxygen saturation [%]")
-
-        turbidity = get_fig_fct_depth(x_axis_label="Turbidity")
-
-        def scatter_fct_depth(fig, x, source, color, fill_alpha=0.2, size=5):
-            si = fig.scatter(
-                x, "depth", source=source, color=color, fill_alpha=fill_alpha, size=size
-            )
-            return si
-
-        def line_fct_depth(fig, x, source, color, line_alpha=1, line_width=0.5):
-            li = fig.line(
-                x, "depth", source=source, color=color, line_alpha=line_alpha, line_width=line_width
-            )
-            return li
 
         # Add data to plot
         palette = Category10[10]
@@ -1248,28 +1102,28 @@ class bokeh_layout:
                 columns={v: k for k, v in self.get_suite_dict().items()}
             )
             source_i = ColumnDataSource(data_i)
-            scatter_fct_depth(fig=depth_temperature, x="temp", source=source_i, color=color_i)
-            li = line_fct_depth(fig=depth_temperature, x="temp", source=source_i, color=color_i)
+            self.scatter_fct_depth(fig=depth_temperature, x="temp", source=source_i, color=color_i)
+            li = self.line_fct_depth(fig=depth_temperature, x="temp", source=source_i, color=color_i)
 
             renderer_list += [li]
-            # Add data to plot
-            scatter_fct_depth(fig=depth_salinity, x="sal", source=source_i, color=color_i)
-            line_fct_depth(fig=depth_salinity, x="sal", source=source_i, color=color_i)
+            # Add data to figures
+            self.scatter_fct_depth(fig=depth_salinity, x="sal", source=source_i, color=color_i)
+            self.line_fct_depth(fig=depth_salinity, x="sal", source=source_i, color=color_i)
 
-            scatter_fct_depth(fig=pressure_oxygen, x="oxy_conc", source=source_i, color=color_i)
-            line_fct_depth(fig=pressure_oxygen, x="oxy_conc", source=source_i, color=color_i)
+            self.scatter_fct_depth(fig=pressure_oxygen, x="oxy_conc", source=source_i, color=color_i)
+            self.line_fct_depth(fig=pressure_oxygen, x="oxy_conc", source=source_i, color=color_i)
 
-            scatter_fct_depth(fig=depth_conductivity, x="cond", source=source_i, color=color_i)
-            line_fct_depth(fig=depth_conductivity, x="cond", source=source_i, color=color_i)
+            self.scatter_fct_depth(fig=depth_conductivity, x="cond", source=source_i, color=color_i)
+            self.line_fct_depth(fig=depth_conductivity, x="cond", source=source_i, color=color_i)
 
-            scatter_fct_depth(fig=pressure_sigma, x="sigma-theta", source=source_i, color=color_i)
-            line_fct_depth(fig=pressure_sigma, x="sigma-theta", source=source_i, color=color_i)
+            self.scatter_fct_depth(fig=pressure_sigma, x="sigma-theta", source=source_i, color=color_i)
+            self.line_fct_depth(fig=pressure_sigma, x="sigma-theta", source=source_i, color=color_i)
 
-            scatter_fct_depth(fig=oxygen_sat, x="oxy_sat", source=source_i, color=color_i)
-            line_fct_depth(fig=oxygen_sat, x="oxy_sat", source=source_i, color=color_i)
+            self.scatter_fct_depth(fig=oxygen_sat, x="oxy_sat", source=source_i, color=color_i)
+            self.line_fct_depth(fig=oxygen_sat, x="oxy_sat", source=source_i, color=color_i)
 
-            scatter_fct_depth(fig=turbidity, x="TurbidityMeter_0", source=source_i, color=color_i)
-            line_fct_depth(fig=turbidity, x="TurbidityMeter_0", source=source_i, color=color_i)
+            self.scatter_fct_depth(fig=turbidity, x="TurbidityMeter_0", source=source_i, color=color_i)
+            self.line_fct_depth(fig=turbidity, x="TurbidityMeter_0", source=source_i, color=color_i)
 
         legend_items = [
             LegendItem(
