@@ -551,6 +551,7 @@ class bokeh_layout:
             "oxy_sat": f"sbeox{sensor_suffix}PS",
         }
         return suite_dict
+
     @staticmethod
     def get_fig_fct_depth(
         x_axis_label,
@@ -580,7 +581,12 @@ class bokeh_layout:
     @staticmethod
     def line_fct_depth(fig, x, source, color, line_alpha=1, line_width=0.5):
         li = fig.line(
-            x, "depth", source=source, color=color, line_alpha=line_alpha, line_width=line_width
+            x,
+            "depth",
+            source=source,
+            color=color,
+            line_alpha=line_alpha,
+            line_width=line_width,
         )
         return li
 
@@ -679,42 +685,70 @@ class bokeh_layout:
         ]:
             fi.y_range = depth_temperature.y_range
 
-        self.scatter_fct_depth(fig=depth_temperature, x="temp", source=self.col_src_bin, color="green")
-        self.line_fct_depth(fig=depth_temperature, x="temp", source=self.col_src_bin, color="green")
+        self.scatter_fct_depth(
+            fig=depth_temperature, x="temp", source=self.col_src_bin, color="green"
+        )
+        self.line_fct_depth(
+            fig=depth_temperature, x="temp", source=self.col_src_bin, color="green"
+        )
 
         self.depth_temperature = depth_temperature
 
         # Set up depth vs conductivity plot settings
-        self.scatter_fct_depth(fig=depth_conductivity, x="cond", source=self.col_src_bin, color="green")
-        self.line_fct_depth(fig=depth_conductivity, x="cond", source=self.col_src_bin, color="green")
+        self.scatter_fct_depth(
+            fig=depth_conductivity, x="cond", source=self.col_src_bin, color="green"
+        )
+        self.line_fct_depth(
+            fig=depth_conductivity, x="cond", source=self.col_src_bin, color="green"
+        )
 
         self.depth_conductivity = depth_conductivity
 
         # Set up depth vs salinity plot settings
-        self.scatter_fct_depth(fig=depth_salinity, x="sal", source=self.col_src_bin, color="green")
-        self.line_fct_depth(fig=depth_salinity, x="sal", source=self.col_src_bin, color="green")
+        self.scatter_fct_depth(
+            fig=depth_salinity, x="sal", source=self.col_src_bin, color="green"
+        )
+        self.line_fct_depth(
+            fig=depth_salinity, x="sal", source=self.col_src_bin, color="green"
+        )
 
         self.depth_salinity = depth_salinity
 
         # Set up pressure vs oxygen conc plot settings
-        self.scatter_fct_depth(fig=pressure_oxygen, x="oxy_conc", source=self.col_src_bin, color="green")
-        self.line_fct_depth(fig=pressure_oxygen, x="oxy_conc", source=self.col_src_bin, color="green")
+        self.scatter_fct_depth(
+            fig=pressure_oxygen, x="oxy_conc", source=self.col_src_bin, color="green"
+        )
+        self.line_fct_depth(
+            fig=pressure_oxygen, x="oxy_conc", source=self.col_src_bin, color="green"
+        )
 
         self.pressure_oxygen = pressure_oxygen
 
         # Set up pressure vs sigma-theta plot settings
-        self.scatter_fct_depth(fig=pressure_sigma, x="sigma-theta", source=self.col_src_bin, color="green")
-        self.line_fct_depth(fig=pressure_sigma, x="sigma-theta", source=self.col_src_bin, color="green")
+        self.scatter_fct_depth(
+            fig=pressure_sigma, x="sigma-theta", source=self.col_src_bin, color="green"
+        )
+        self.line_fct_depth(
+            fig=pressure_sigma, x="sigma-theta", source=self.col_src_bin, color="green"
+        )
 
         self.pressure_sigma = pressure_sigma
 
-        self.scatter_fct_depth(fig=oxygen_sat, x="oxy_sat", source=self.col_src_bin, color="green")
-        self.line_fct_depth(fig=oxygen_sat, x="oxy_sat", source=self.col_src_bin, color="green")
+        self.scatter_fct_depth(
+            fig=oxygen_sat, x="oxy_sat", source=self.col_src_bin, color="green"
+        )
+        self.line_fct_depth(
+            fig=oxygen_sat, x="oxy_sat", source=self.col_src_bin, color="green"
+        )
 
         self.oxygen_sat = oxygen_sat
 
-        self.scatter_fct_depth(fig=turbidity, x="TurbidityMeter_0", source=self.col_src_bin, color="green")
-        self.line_fct_depth(fig=turbidity, x="TurbidityMeter_0", source=self.col_src_bin, color="green")
+        self.scatter_fct_depth(
+            fig=turbidity, x="TurbidityMeter_0", source=self.col_src_bin, color="green"
+        )
+        self.line_fct_depth(
+            fig=turbidity, x="TurbidityMeter_0", source=self.col_src_bin, color="green"
+        )
 
         self.turbidity = turbidity
 
@@ -1072,7 +1106,6 @@ class bokeh_layout:
 
         self.survey_map = survey_map
 
-
         # Set up depth vs quantity plots
         depth_temperature = self.get_fig_fct_depth(x_axis_label="Temperature [degC]")
         depth_temperature.y_range = DataRange1d(flipped=True)
@@ -1084,7 +1117,6 @@ class bokeh_layout:
         pressure_sigma = self.get_fig_fct_depth(x_axis_label="SigmaTheta [kg/m^3]")
         oxygen_sat = self.get_fig_fct_depth(x_axis_label="Oxygen saturation [%]")
         turbidity = self.get_fig_fct_depth(x_axis_label="Turbidity")
-
 
         # Add data to plot
         palette = Category10[10]
@@ -1102,28 +1134,56 @@ class bokeh_layout:
                 columns={v: k for k, v in self.get_suite_dict().items()}
             )
             source_i = ColumnDataSource(data_i)
-            self.scatter_fct_depth(fig=depth_temperature, x="temp", source=source_i, color=color_i)
-            li = self.line_fct_depth(fig=depth_temperature, x="temp", source=source_i, color=color_i)
+            self.scatter_fct_depth(
+                fig=depth_temperature, x="temp", source=source_i, color=color_i
+            )
+            li = self.line_fct_depth(
+                fig=depth_temperature, x="temp", source=source_i, color=color_i
+            )
 
             renderer_list += [li]
             # Add data to figures
-            self.scatter_fct_depth(fig=depth_salinity, x="sal", source=source_i, color=color_i)
-            self.line_fct_depth(fig=depth_salinity, x="sal", source=source_i, color=color_i)
+            self.scatter_fct_depth(
+                fig=depth_salinity, x="sal", source=source_i, color=color_i
+            )
+            self.line_fct_depth(
+                fig=depth_salinity, x="sal", source=source_i, color=color_i
+            )
 
-            self.scatter_fct_depth(fig=pressure_oxygen, x="oxy_conc", source=source_i, color=color_i)
-            self.line_fct_depth(fig=pressure_oxygen, x="oxy_conc", source=source_i, color=color_i)
+            self.scatter_fct_depth(
+                fig=pressure_oxygen, x="oxy_conc", source=source_i, color=color_i
+            )
+            self.line_fct_depth(
+                fig=pressure_oxygen, x="oxy_conc", source=source_i, color=color_i
+            )
 
-            self.scatter_fct_depth(fig=depth_conductivity, x="cond", source=source_i, color=color_i)
-            self.line_fct_depth(fig=depth_conductivity, x="cond", source=source_i, color=color_i)
+            self.scatter_fct_depth(
+                fig=depth_conductivity, x="cond", source=source_i, color=color_i
+            )
+            self.line_fct_depth(
+                fig=depth_conductivity, x="cond", source=source_i, color=color_i
+            )
 
-            self.scatter_fct_depth(fig=pressure_sigma, x="sigma-theta", source=source_i, color=color_i)
-            self.line_fct_depth(fig=pressure_sigma, x="sigma-theta", source=source_i, color=color_i)
+            self.scatter_fct_depth(
+                fig=pressure_sigma, x="sigma-theta", source=source_i, color=color_i
+            )
+            self.line_fct_depth(
+                fig=pressure_sigma, x="sigma-theta", source=source_i, color=color_i
+            )
 
-            self.scatter_fct_depth(fig=oxygen_sat, x="oxy_sat", source=source_i, color=color_i)
-            self.line_fct_depth(fig=oxygen_sat, x="oxy_sat", source=source_i, color=color_i)
+            self.scatter_fct_depth(
+                fig=oxygen_sat, x="oxy_sat", source=source_i, color=color_i
+            )
+            self.line_fct_depth(
+                fig=oxygen_sat, x="oxy_sat", source=source_i, color=color_i
+            )
 
-            self.scatter_fct_depth(fig=turbidity, x="TurbidityMeter_0", source=source_i, color=color_i)
-            self.line_fct_depth(fig=turbidity, x="TurbidityMeter_0", source=source_i, color=color_i)
+            self.scatter_fct_depth(
+                fig=turbidity, x="TurbidityMeter_0", source=source_i, color=color_i
+            )
+            self.line_fct_depth(
+                fig=turbidity, x="TurbidityMeter_0", source=source_i, color=color_i
+            )
 
         legend_items = [
             LegendItem(
