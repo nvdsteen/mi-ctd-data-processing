@@ -8,6 +8,47 @@ The Marine Institute uses 3 Jupyter Notebooks, written in python, to process CTD
 2. Calibrations
 3. Quality Checks
 
+## Setup on Windows 
+
+### 1. Download the Jupyter Notebook from [Github](https://github.com/nvdsteen/mi-ctd-data-processing/archive/refs/heads/main.zip)
+> [!NOTE]  
+> install in the directory of your choice; This is where you’ll start the notebook from.
+
+### 2. Download SBEDataProcessing software and manual
+   - Manual:  https://epic.awi.de/id/eprint/38965/1/SBEDataProcessing_7_23_2.pdf
+   - Software: https://www.seabird.com/asset-get.download.jsa?code=251838 
+
+### 3. Download **Python 3.12** https://www.python.org/downloads/windows/                                                                                                                 
+   - install Python, **note the path**!
+   - add path to environmental variable. Go to search bar, find environmental variable, click on `Path`, add a new variable with the path to the recently installed Python software.
+   - Open the command line window and check python version: `python --version`
+
+> [!NOTE]
+> If python is not found: Disable Application aliases. Go to search bar, find App execution aliases, find the Python aliases and disable them.
+
+                                                                    
+### 4. Installation Notebook
+  - Go to the notebook folder and activate the virtual environment: `Scripts\activate`
+  - Install requirements: `pip install -Ur mi-ctd-data-processing\requirements.txt`
+  - Install notebook: `pip install notebook`
+  - Start Jupyter notebook: go to mi-ctd-data-processing and type: `jupyter notebook`
+> [!NOTE]
+> A new page will open in your web browser.
+
+          
+### 5. Creation of a batch file to start the notebook (including the virtual environment activation)
+  - open Notepad, type:
+  ```bat
+  call path\to\activate\file
+  cd path\to\notebook
+  jupyter notebook
+  ```
+  - Save as `xxx.bat`
+
+> [!NOTE]
+> To launch the notebook, just double click on the bat file.
+    
+
 ## CTD Data Processing Jupyter Notebook
 The purpose of this notebook was to create a consistent set of data processing steps that could be used both at sea, with limited internet access, and back in the office/laboratory. Following on from this it was decided to make the notebook more accessible and usable to scientists other than physical oceanographers (eg. chemists and fisheries scientists). This allows them to provisionally process CTD data on their research cruises and generate indicative plots of the water masses they are moving through while at sea. The notebook has automated CTD Data Processing, reducing processing time and workload on physical oceanographers. 
 
