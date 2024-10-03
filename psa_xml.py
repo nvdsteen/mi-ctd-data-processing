@@ -4,15 +4,18 @@ import yaml
 import numpy as np
 from pathlib import Path
 from typing import Dict, Any, List, Union
+from collections import OrderedDict
 
 
 # Function to dynamically extract attributes and children for CalcArrayItem
 def extract_calc_item(item: ET.Element) -> Dict[str, Union[str, None]]:
-    calc_item_data: Dict[str, Union[str, None]] = {
-        "section": "CalcArrayItem",
-        "index": item.get("index"),
-        "CalcID": item.get("CalcID"),
-    }
+    calc_item_data: Dict[str, Union[str, None]] = OrderedDict(
+        {
+            "section": "CalcArrayItem",
+            "index": item.get("index"),
+            "CalcID": item.get("CalcID"),
+        }
+    )
 
     calc = item.find("Calc")
     if calc is not None:
@@ -44,10 +47,10 @@ def delete_none(_dict: Union[Dict, List, Any]) -> Union[Dict, List, Any]:
 # Function to handle the CalcArrayItems, parsing and modifying as needed
 def process_calc_array(tree: ET.ElementTree, calc_array_tag: str) -> pd.DataFrame:
     calc_array = tree.find(calc_array_tag)
-    data: List[Dict[str, Union[str, None]]] = []
+    data: List[OrderedDict[str, Union[str, None]]] = []
 
-    for item in calc_array.findall("CalcArrayItem"):
-        data.append(extract_calc_item(item))
+    for item in calc_array.findall("CalcArrayItem"):  # type: ignore
+        data.append(extract_calc_item(item))  # type: ignore
 
     df_calc = pd.DataFrame(data)
     df_calc = df_calc.set_index("index")
@@ -93,7 +96,7 @@ def create_calc_array_xml(
     return calcarray_root
 
 
-# Function to replace the old CalcArray in the XML tree
+# Function to replace the old CalcArray in the XML tree while preserving element order
 def replace_calc_array(
     root: ET.Element, new_calcarray_root: ET.Element, calc_array_tag: str
 ) -> ET.Element:
@@ -112,7 +115,7 @@ def replace_calc_array(
     return root
 
 
-# Function to process the PSA file and return the updated XML tree
+# Function to process the PSA file and return the updated XML tree while preserving element order
 def process_psa_file(psa_file: str) -> ET.Element:
     with open(psa_file, "r") as file:
         lines: List[str] = file.readlines()
