@@ -52,8 +52,8 @@
       <Calc UnitID="64" Ordinal="0">
         <FullName value="Oxygen, SBE 43 [umol/l]" />
         <ApplyHysteresisCorrection value="1" />
-        <ApplyTauCorrection value="1" />
         <WindowSize value="2.000000" />
+        <ApplyTauCorrection value="1" />
       </Calc>
     </CalcArrayItem>
     <CalcArrayItem index="7" CalcID="89">
