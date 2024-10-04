@@ -6,6 +6,7 @@ Created on Thu Mar 14 09:41:32 2024
 """
 # import packages
 import os
+from itertools import cycle
 from bokeh.models import (
     ColumnDataSource,
     CategoricalColorMapper,
@@ -1119,13 +1120,13 @@ class bokeh_layout:
         turbidity = self.get_fig_fct_depth(x_axis_label="Turbidity")
 
         # Add data to plot
-        palette = Category10[10]
+        palette = cycle(Category10[10])
         renderer_list = []
         color_list = []
         label_list = []
         for i, cast_i in enumerate(self.profile_data["CTD number"].unique()):
             label_list += [cast_i]
-            color_i = palette[i]
+            color_i = next(palette)
             color_list += [color_i]
             data_i = self.profile_data.loc[
                 self.profile_data["CTD number"] == cast_i, self.suite
