@@ -47,17 +47,31 @@ def process_cnv(raw_directory):
     
     # Extract lat, long and timestamp from cnv file and create list to add to dataframe        
     for item in cnvfilelist:
-        with open(item) as f:
-            for line in f:
-                line = line.rstrip()
-                if line.startswith("* NMEA Latitude"):
-                    latlist.append(line)
-                if line.startswith("* NMEA Longitude"):
-                    longlist.append(line)
-                if line.startswith("* System UpLoad Time"):
-                    timelist.append(line)
-                if line.startswith("* System UTC"):
-                    systimelist.append(line)
+        try:
+            with open(item) as f:
+                for line in f:
+                    line = line.rstrip()
+                    if line.startswith("* NMEA Latitude"):
+                        latlist.append(line)
+                    if line.startswith("* NMEA Longitude"):
+                        longlist.append(line)
+                    if line.startswith("* System UpLoad Time"):
+                        timelist.append(line)
+                    if line.startswith("* System UTC"):
+                        systimelist.append(line)
+        except UnicodeDecodeError:
+           with open(item, "r", encoding='ISO-8859-1') as f:
+                for line in f:
+                    line = line.rstrip()
+                    if line.startswith("* NMEA Latitude"):
+                        latlist.append(line)
+                    if line.startswith("* NMEA Longitude"):
+                        longlist.append(line)
+                    if line.startswith("* System UpLoad Time"):
+                        timelist.append(line)
+                    if line.startswith("* System UTC"):
+                        systimelist.append(line)
+ 
                 
     return {'cnvfilelist': [Path(cnv_i).name for cnv_i in cnvfilelist],
             'latlist': latlist,
@@ -92,33 +106,63 @@ def get_NMEA_from_header(directory, fileformat):
         # file_i_lower = os.path.join(directory,item.lower()+".%s" % fileformat.lower())
         # file_i_upper = os.path.join(directory,item.upper()+".%s" % fileformat.lower())
         # file_i = [file_i_lower, file_i_upper][os.path.exists(file_i_upper)]
-        with open(item) as f:
-            latdec = np.nan 
-            londec = np.nan
-            upload_time = ''
-            utc_time = ''
+        try: 
+            with open(item) as f:
+                latdec = np.nan 
+                londec = np.nan
+                upload_time = ''
+                utc_time = ''
         
-            for line in f:
-                line = line.rstrip()
-                if line.startswith("* NMEA Latitude"):
-                    x = line.split( )
-                    latdec = float(x[5])/60
-                    latdec = latdec + float(x[4])
-                    if x[6]=='S':
-                        latdec = latdec * -1
+                for line in f:
+                    line = line.rstrip()
+                    if line.startswith("* NMEA Latitude"):
+                        x = line.split( )
+                        latdec = float(x[5])/60
+                        latdec = latdec + float(x[4])
+                        if x[6]=='S':
+                            latdec = latdec * -1
 
-                if line.startswith("* NMEA Longitude"):
-                    x = line.split( )
-                    londec = float(x[5])/60
-                    londec = londec + float(x[4])
-                    if x[6]=='W':
-                        londec = londec * -1
-                    
-                if line.startswith("* System UpLoad Time"):
-                    upload_time = line
-                    
-                if line.startswith("* System UTC"):
-                    utc_time = line
+                    if line.startswith("* NMEA Longitude"):
+                        x = line.split( )
+                        londec = float(x[5])/60
+                        londec = londec + float(x[4])
+                        if x[6]=='W':
+                            londec = londec * -1
+
+                    if line.startswith("* System UpLoad Time"):
+                        upload_time = line
+
+                    if line.startswith("* System UTC"):
+                        utc_time = line
+        except UnicodeDecodeError:
+           with open(item, "r", encoding="ISO-8859-1") as f:
+                latdec = np.nan 
+                londec = np.nan
+                upload_time = ''
+                utc_time = ''
+        
+                for line in f:
+                    line = line.rstrip()
+                    if line.startswith("* NMEA Latitude"):
+                        x = line.split( )
+                        latdec = float(x[5])/60
+                        latdec = latdec + float(x[4])
+                        if x[6]=='S':
+                            latdec = latdec * -1
+
+                    if line.startswith("* NMEA Longitude"):
+                        x = line.split( )
+                        londec = float(x[5])/60
+                        londec = londec + float(x[4])
+                        if x[6]=='W':
+                            londec = londec * -1
+
+                    if line.startswith("* System UpLoad Time"):
+                        upload_time = line
+
+                    if line.startswith("* System UTC"):
+                        utc_time = line
+ 
 
         # Save metadata to dataframe for file
         df_NMEA = pd.concat([df_NMEA, 
