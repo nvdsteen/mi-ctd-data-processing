@@ -348,7 +348,8 @@ def create_ctd_events(cruiseID,
         #join output from pumpdf based on CTD number
         if len(systimelist)!=0:
             ctd_events_nopos = ctd_events_nopos.merge(pumpdf, on='CTD number')
-            ctd_events_nopos['CTD_start'] = ctd_events_nopos['Deck_checks'] + pd.Timedelta(ctd_events_nopos['Start'], unit='S') # type: ignore 
+            # ctd_events_nopos['CTD_start'] = ctd_events_nopos['Deck_checks'] + pd.Timedelta(ctd_events_nopos['Start'], unit='S') # type: ignore 
+            ctd_events_nopos['CTD_start'] = ctd_events_nopos['Deck_checks'] + ctd_events_nopos['Start']
             ctd_events_nopos['CTD_start'] = ctd_events_nopos['CTD_start'].dt.round('S')
             del ctd_events_nopos['Start']
         else:
@@ -360,6 +361,7 @@ def create_ctd_events(cruiseID,
             # Save metadata to file for underway postion extraction of lat/lon
             ctd_events_nopos.to_csv(os.path.join(logs,'Metadata_'+cruiseID+'_nopos.csv'), index= False)
             print('Metadata_'+cruiseID+'_nopos.csv saved to logsheets folder. Populate lat/lon positions from underway database before proceeding.')
+            return ctd_events_nopos # NOT SURE
         else:                                                                       ### if user has populated metadata file with Lat Lons
             print("File present with latitude and longitude from database underway SCS processing.")
             ctd_events = pd.read_csv(db_metadata, parse_dates = ['Deck_checks',
