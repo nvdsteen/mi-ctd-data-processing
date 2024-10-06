@@ -33,6 +33,7 @@ class CTD_Data:
         """
         # get list of all files in directories
         files = os.listdir(rawFileDirectory) + os.listdir(bottleFileDirectory) 
+        files = os.listdir(rawFileDirectory) 
         filetypes = ['.xmlcon','.bl','.hex','.hdr','.cnv','.btl']
         
         self.psaDirectory = psaDirectory 
@@ -80,6 +81,8 @@ class CTD_Data:
                     self.arrayItemsIndex.append(i)
                     self.arrayItemsValue.append(name)
                     i+=1
+                # else:
+                    # raise(IOError("Incorrect input files."))
 
             fileTypeCount.append(len(names))
             if filetype=='.xmlcon':
