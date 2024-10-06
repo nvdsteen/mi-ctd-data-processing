@@ -252,7 +252,8 @@ def create_ctd_events(cruiseID,
         pandas.DataFrame
         
     """
-    
+    ctd_events = pd.DataFrame()
+    ctd_events_nopos = pd.DataFrame()
     cnv_data = process_cnv(raw_directory)
 
     print("\nExtracting cast metadata from the header information for each cast for reference.")
@@ -361,14 +362,19 @@ def create_ctd_events(cruiseID,
             # Save metadata to file for underway postion extraction of lat/lon
             ctd_events_nopos.to_csv(os.path.join(logs,'Metadata_'+cruiseID+'_nopos.csv'), index= False)
             print('Metadata_'+cruiseID+'_nopos.csv saved to logsheets folder. Populate lat/lon positions from underway database before proceeding.')
-            return ctd_events_nopos # NOT SURE
+            # return ctd_events_nopos # NOT SURE
         else:                                                                       ### if user has populated metadata file with Lat Lons
             print("File present with latitude and longitude from database underway SCS processing.")
             ctd_events = pd.read_csv(db_metadata, parse_dates = ['Deck_checks',
                                                                 'CTD_start'
                                                                 ])
         
-    return ctd_events
+    if not ctd_events.empty:
+        return ctd_events
+    elif not ctd_events_nopos.empty:
+        return ctd_events_nopos
+    else:
+        raise IOError("No ctd_events could (with or without positional information) could be created.")
 
 #%%
 def create_output_csv_for_fisheries(df, output_directory):
