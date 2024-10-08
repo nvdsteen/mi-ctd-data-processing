@@ -309,7 +309,7 @@ def create_ctd_events(cruiseID,
         else:
             print("No logsheet to merge additional cast metadata.")
         
-        ctd_events_nopos = None
+        # ctd_events_nopos = None
         
     ## In the absence of the NMEA fields then use the logsheet metadata
     elif os.path.exists(logsheets) and (df_missingNMEA['Lat'] != 0 or df_missingNMEA['Long'] != 0):
@@ -331,7 +331,7 @@ def create_ctd_events(cruiseID,
         ctd_events['CTD_start'] = ctd_events['CTD_start'].dt.round('s')
         del ctd_events['Start']
 
-        ctd_events_nopos = None
+        # ctd_events_nopos = None
         
     ## In the absence of both NMEA and logsheets then take the system upload time (have to assume this is correctly synchronised with the ship's time) and get lat/long positions from the underway dataset
     else:

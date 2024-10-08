@@ -71,11 +71,13 @@ class CTD_Data:
                     if line_num > 2:
                         #print('greater than 2: ' + name)    
                         names.append(name)
-                        allFilesInDirectory.append(name.lower())
+                        # allFilesInDirectory.append(name.lower())
+                        allFilesInDirectory.append(name)
                         allFileTypesInDirectory.append(filetype)
                 if filetype != '.bl' and name.lower().endswith(filetype): 
                     names.append(name)
-                    allFilesInDirectory.append(name.lower())
+                    # allFilesInDirectory.append(name.lower())
+                    allFilesInDirectory.append(name)
                     allFileTypesInDirectory.append(filetype)
                 if filetype == '.hex' and name.lower().endswith(filetype):
                     self.arrayItemsIndex.append(i)
@@ -98,7 +100,7 @@ class CTD_Data:
         self.df = self.df.pivot(index='cast', columns='file_type', values='present')
         self.df = self.df.fillna(0)
         
-        for item in ['hdr','bl','hex','XMLCON','cnv','btl']:
+        for item in ['hdr','bl','hex','xmlcon','cnv','btl']:
             if item.lower() not in self.df.columns:
                 self.df[item]=0
            
