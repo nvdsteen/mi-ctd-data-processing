@@ -77,6 +77,8 @@ def main():
                     f'=HYPERLINK("{output_file.relative_to(out_overview.parent).as_posix()}", "{di_name}"',
                 )
             ]
+        else:
+            content_overview += [(di_name, "")]
     df_overview = pd.DataFrame(
         content_overview, columns=["Dataset", "Link"]
     ).sort_values("Dataset")
