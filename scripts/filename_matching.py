@@ -1,5 +1,6 @@
 from pathlib import Path
 import pandas as pd
+import openpyxl
 import re
 
 
@@ -31,16 +32,11 @@ def match_stem_caseinsensitive(
 
 
 def main():
-    # folder = Path("2024_01/raw_files")
-    folder = Path(
-        # "/home/nvds/Documents/RBINS/Onedrive/CTD_testing/Data2022/2022_09a/raw_files"
-        "/home/nvadmin/Documents/IrishMarineInstitute/mi-ctd-data-processing/CTD_data_renamed"
-    )
-    out = Path(
-        "/home/nvadmin/Documents/IrishMarineInstitute/mi-ctd-data-processing/CTD_data_renamed/mismatched_filenames/"
-    )
+    folder = Path().joinpath("CTD_data_renamed")
+    out = Path().joinpath("CTD_data_renamed/mismatched_filenames/")
+
     raw_folders = folder.rglob("raw_files")
-    out_overview = out.parent.joinpath("overview.xslx")
+    out_overview = out.parent.joinpath("overview.xlsx")
 
     columns = [".xmlcon", ".hex", ".bl", ".mrk", ".hdr", ".btl", ".cnv"]
 
@@ -54,25 +50,37 @@ def main():
         )
         additional_columns = set(dfi.columns).difference(relevant_columns)
 
-        output_file = out.joinpath(di_name + "_mismatching_files.csv")
-        dfi_mismatch = dfi[dfi[relevant_columns].isna().any(axis=1)]
+        output_file = out.joinpath(di_name + "_mismatching_files.xlsx")
+        columns_with_mismatch = dfi[relevant_columns].isna().any(axis=1)
+        dfi_mismatch = dfi[columns_with_mismatch]
+        btl_in_folder = ".btl" in relevant_columns
 
-        # dfi_mismatch.to_csv(output_file)
+        if columns_with_mismatch.any() or btl_in_folder:
+            sheet_name = "Mismatching filenames"
+            with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
+                dfi_mismatch.to_excel(
+                    writer, sheet_name=sheet_name, startrow=3, index=False
+                )
 
-        template = ""
-        if additional_columns:
-            template += f"Addition columns: {', '.join(additional_columns)}\n"
-        if ".btl" in relevant_columns:
-            template += f"{di_name} has .btl files in raw_files folder.\n"
+            wb = openpyxl.load_workbook(output_file)
+            ws = wb[sheet_name]
+            ws["A1"] = f"Addition columns:"
+            ws["B1"] = f"{', '.join(additional_columns)}"
+            ws["A2"] = f".btl files in raw_files folder:"
+            ws["B2"] = f"{'.btl' in relevant_columns}"
 
-        template += "{}"
+            wb.save(output_file)
 
-        if template.format("") or not dfi_mismatch.empty:
-            with open(output_file, "w+") as fi:
-                fi.write(template.format(dfi_mismatch.to_csv(index=True)))
-                # content_overview += [(di_name, f"=HYPERLINK(\"{output_file.as_posix()}\", \"{di_name}\"")]
-                content_overview += [(di_name, f"=HYPERLINK(\"{output_file.relative_to(out_overview.parent).as_posix()}\", \"{di_name}\"")]
-    pd.DataFrame(content_overview, columns=["Dataset", "Link"]).to_excel(out_overview)
+            content_overview += [
+                (
+                    di_name,
+                    f'=HYPERLINK("{output_file.relative_to(out_overview.parent).as_posix()}", "{di_name}"',
+                )
+            ]
+    df_overview = pd.DataFrame(
+        content_overview, columns=["Dataset", "Link"]
+    ).sort_values("Dataset")
+    df_overview.to_excel(out_overview, index=False)
 
 
 if __name__ == "__main__":
