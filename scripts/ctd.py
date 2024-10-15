@@ -12,7 +12,7 @@ from typing import Dict, List
 
 # Import bespoke functions
 import scripts.calculations as calculations
-from scripts.filename_matching import match_stem_casinsensitive_lists
+from scripts.filename_matching import match_stem_caseinsensitive_lists, match_stem_caseinsensitive
 
 class CTD_Data:
     def __init__(self, 
@@ -222,27 +222,27 @@ def generate_psa_files(sensor_counts,
                 {
                     "name": f'datcnv{psa_name_suffix}',
                     "template": psaTemplate,
-                    "arrayItems": match_stem_casinsensitive_lists(matching=match_list, input=data.hexfiles),
+                    "arrayItems": match_stem_caseinsensitive_lists(matching=match_list, input=data.hexfiles),
                 },
                 {
                     "name": f'wildedit{psa_name_suffix}',
                     "template": wildeditTemplate,
-                    "arrayItems": match_stem_casinsensitive_lists(matching=match_list, input=data.cnvfiles),
+                    "arrayItems": match_stem_caseinsensitive_lists(matching=match_list, input=data.cnvfiles),
                 },
                 {
                     "name": f'cellTM{psa_name_suffix}',
                     "template": celltmTemplate,
-                    "arrayItems": match_stem_casinsensitive_lists(matching=match_list, input=data.cnvfiles),
+                    "arrayItems": match_stem_caseinsensitive_lists(matching=match_list, input=data.cnvfiles),
                 },
                 {
                     "name": f'binavg2Hz{psa_name_suffix}',
                     "template": binavg2HzTemplate,
-                    "arrayItems": match_stem_casinsensitive_lists(matching=match_list, input=data.cnvfiles),
+                    "arrayItems": match_stem_caseinsensitive_lists(matching=match_list, input=data.cnvfiles),
                 },
                 {
                     "name": f'filter{psa_name_suffix}',
                     "template": filterTemplate,
-                    "arrayItems": match_stem_casinsensitive_lists(matching=match_list, input=data.cnvfiles),
+                    "arrayItems": match_stem_caseinsensitive_lists(matching=match_list, input=data.cnvfiles),
                 },
             ]
         return template_name_list
@@ -260,6 +260,7 @@ def generate_psa_files(sensor_counts,
         for i in template_name_list:
             if len(i.get("arrayItems", [])) > 0:
                 data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.instrumentPath = match_stem_caseinsensitive(filename=i.get("arrayItems", "")[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
                 data.numberArrayItems = len(data.arrayItems)
                 generateXml(i.get("template"), data, i.get("name"))
         
@@ -278,6 +279,7 @@ def generate_psa_files(sensor_counts,
         for i in template_name_list:
             if len(i.get("arrayItems", [])) > 0:
                 data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.instrumentPath = match_stem_caseinsensitive(filename=i.get("arrayItems", "")[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
                 data.numberArrayItems = len(data.arrayItems)
                 generateXml(i.get("template"), data, i.get("name"))
 
@@ -291,6 +293,7 @@ def generate_psa_files(sensor_counts,
         data.CreateFile = 2
         #data.arrayItems = dict2array(data.headerMissing)
         data.arrayItems = calculations.splitList(input_arg)
+        data.instrumentPath = match_stem_caseinsensitive(filename=input_arg[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
         data.numberArrayItems = len(input_arg)
         psa_name_suffix = "_headerMissing.psa"
         
@@ -298,6 +301,7 @@ def generate_psa_files(sensor_counts,
         for i in template_name_list:
             if len(i.get("arrayItems", [])) > 0:
                 data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.instrumentPath = match_stem_caseinsensitive(filename=i.get("arrayItems", "")[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
                 data.numberArrayItems = len(data.arrayItems)
                 generateXml(i.get("template"), data, i.get("name"))
 
@@ -308,14 +312,16 @@ def generate_psa_files(sensor_counts,
     if len(input_arg) > 0:
         data.MergeHeaderFile = 1
         data.CreateFile = 0
-        data.numberArrayItems = len(input_arg)
+        data.instrumentPath = match_stem_caseinsensitive(filename=input_arg[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
         data.arrayItems = calculations.splitList(input_arg)
+        data.numberArrayItems = len(input_arg)
         psa_name_suffix = "_blMissing.psa"
         
         template_name_list = generate_template_name_list(psa_name_suffix, match_list=input_arg)
         for i in template_name_list:
             if len(i.get("arrayItems", [])) > 0:
                 data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.instrumentPath = match_stem_caseinsensitive(filename=i.get("arrayItems", "")[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
                 data.numberArrayItems = len(data.arrayItems)
                 generateXml(i.get("template"), data, i.get("name"))
                 
@@ -337,6 +343,7 @@ def generate_psa_files(sensor_counts,
         input_arg = [x for x in data.blPresent if x not in data.btlPresent] 
     if len(input_arg) > 0:
         #print(data.numberArrayItems)
+        data.instrumentPath = match_stem_caseinsensitive(filename=input_arg[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
         data.arrayItems = calculations.splitList(data.rosfiles) # type: ignore
         data.numberArrayItems = len(data.arrayItems)
         name='MI_botsum.psa'

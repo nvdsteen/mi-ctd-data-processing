@@ -23,15 +23,17 @@ def replace_extension(file: Path | str, ext_in, ext_out) -> str:
 
 
 def match_stem_caseinsensitive(
-    filename: str | Path, search_path: str | Path, searched_extension: str
+    filename: str | Path, search_path: str | Path, searched_extension: str, return_full_path: bool=False
 ) -> str:
     pattern = re.compile(Path(filename).stem + f"{searched_extension}", re.IGNORECASE)
     files = [f for f in Path(search_path).rglob("*") if pattern.match(f.name)]
     assert len(files) == 1
+    if return_full_path:
+        return files[0].as_posix()
     return files[0].name
 
 
-def match_stem_casinsensitive_lists(matching: list[str], input: list[str]):
+def match_stem_caseinsensitive_lists(matching: list[str], input: list[str]):
     matched = []
     for mi in matching:
         pattern = re.compile(mi, re.IGNORECASE)
