@@ -239,6 +239,11 @@ def generate_psa_files(sensor_counts,
                     "template": binavg2HzTemplate,
                     "arrayItems": match_stem_casinsensitive_lists(matching=match_list, input=data.cnvfiles),
                 },
+                {
+                    "name": f'filter{psa_name_suffix}',
+                    "template": filterTemplate,
+                    "arrayItems": match_stem_casinsensitive_lists(matching=match_list, input=data.cnvfiles),
+                },
             ]
         return template_name_list
     # Logic to generate different PSA files
