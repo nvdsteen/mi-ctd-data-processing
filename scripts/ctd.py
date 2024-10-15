@@ -12,6 +12,7 @@ from typing import Dict, List
 
 # Import bespoke functions
 import scripts.calculations as calculations
+from scripts.filename_matching import match_stem_casinsensitive_lists
 
 class CTD_Data:
     def __init__(self, 
@@ -216,27 +217,27 @@ def generate_psa_files(sensor_counts,
     # Create dataset object to pass to template
     data = CTD_Data(raw, screen_2Hz, bottle, psa)
     # Repeating element of key value pairs to populate array items in psa file
-    def generate_template_name_list(psa_name_suffix):
+    def generate_template_name_list(psa_name_suffix, match_list):
         template_name_list = [
                 {
                     "name": f'datcnv{psa_name_suffix}',
                     "template": psaTemplate,
-                    "arrayItems": data.hexfiles,
+                    "arrayItems": match_stem_casinsensitive_lists(matching=match_list, input=data.hexfiles),
                 },
                 {
                     "name": f'wildedit{psa_name_suffix}',
                     "template": wildeditTemplate,
-                    "arrayItems": data.cnvfiles,
+                    "arrayItems": match_stem_casinsensitive_lists(matching=match_list, input=data.cnvfiles),
                 },
                 {
                     "name": f'cellTM{psa_name_suffix}',
                     "template": celltmTemplate,
-                    "arrayItems": data.cnvfiles,
+                    "arrayItems": match_stem_casinsensitive_lists(matching=match_list, input=data.cnvfiles),
                 },
                 {
                     "name": f'binavg2Hz{psa_name_suffix}',
                     "template": binavg2HzTemplate,
-                    "arrayItems": data.cnvfiles,
+                    "arrayItems": match_stem_casinsensitive_lists(matching=match_list, input=data.cnvfiles),
                 },
             ]
         return template_name_list
@@ -250,11 +251,12 @@ def generate_psa_files(sensor_counts,
         data.CreateFile = 2
         psa_name_suffix = "_headerANDblPresent.psa"
         
-        template_name_list = generate_template_name_list(psa_name_suffix)
+        template_name_list = generate_template_name_list(psa_name_suffix, match_list=input_arg)
         for i in template_name_list:
-            data.arrayItems = calculations.splitList(i.get("arrayItems"))
-            data.numberArrayItems = len(data.arrayItems)
-            generateXml(i.get("template"), data, i.get("name"))
+            if len(i.get("arrayItems", [])) > 0:
+                data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.numberArrayItems = len(data.arrayItems)
+                generateXml(i.get("template"), data, i.get("name"))
         
     if proc_mode == 0:
         input_arg = data.headerANDblMissing
@@ -267,11 +269,12 @@ def generate_psa_files(sensor_counts,
         data.arrayItems = calculations.splitList(input_arg)
         psa_name_suffix = "_headerANDblMissing.psa"
         
-        template_name_list = generate_template_name_list(psa_name_suffix)
+        template_name_list = generate_template_name_list(psa_name_suffix, match_list=input_arg)
         for i in template_name_list:
-            data.arrayItems = calculations.splitList(i.get("arrayItems"))
-            data.numberArrayItems = len(data.arrayItems)
-            generateXml(i.get("template"), data, i.get("name"))
+            if len(i.get("arrayItems", [])) > 0:
+                data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.numberArrayItems = len(data.arrayItems)
+                generateXml(i.get("template"), data, i.get("name"))
 
         
     if proc_mode == 0:
@@ -286,11 +289,12 @@ def generate_psa_files(sensor_counts,
         data.numberArrayItems = len(input_arg)
         psa_name_suffix = "_headerMissing.psa"
         
-        template_name_list = generate_template_name_list(psa_name_suffix)
+        template_name_list = generate_template_name_list(psa_name_suffix, match_list=input_arg)
         for i in template_name_list:
-            data.arrayItems = calculations.splitList(i.get("arrayItems"))
-            data.numberArrayItems = len(data.arrayItems)
-            generateXml(i.get("template"), data, i.get("name"))
+            if len(i.get("arrayItems", [])) > 0:
+                data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.numberArrayItems = len(data.arrayItems)
+                generateXml(i.get("template"), data, i.get("name"))
 
     if proc_mode == 0:
         input_arg = data.blMissing
@@ -303,11 +307,12 @@ def generate_psa_files(sensor_counts,
         data.arrayItems = calculations.splitList(input_arg)
         psa_name_suffix = "_blMissing.psa"
         
-        template_name_list = generate_template_name_list(psa_name_suffix)
+        template_name_list = generate_template_name_list(psa_name_suffix, match_list=input_arg)
         for i in template_name_list:
-            data.arrayItems = calculations.splitList(i.get("arrayItems"))
-            data.numberArrayItems = len(data.arrayItems)
-            generateXml(i.get("template"), data, i.get("name"))
+            if len(i.get("arrayItems", [])) > 0:
+                data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.numberArrayItems = len(data.arrayItems)
+                generateXml(i.get("template"), data, i.get("name"))
                 
     ### Modified 06/07/21 to account for cruises without Btl files ###
     btl_files = data.blPresent

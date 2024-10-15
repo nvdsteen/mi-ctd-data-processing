@@ -31,12 +31,20 @@ def match_stem_caseinsensitive(
     return files[0].name
 
 
+def match_stem_casinsensitive_lists(matching: list[str], input: list[str]):
+    matched = []
+    for mi in matching:
+        pattern = re.compile(mi, re.IGNORECASE)
+        matched += [fi for fi in input if pattern.match(fi)]
+    return matched
+
+
 def adjust_worksheet_columns_width(worksheet):
     for col in worksheet.columns:
         max_length = 0
-        column_name = col[0].column_letter # Get the column name
+        column_name = col[0].column_letter  # Get the column name
         for cell in col:
-            try: # Necessary to avoid error on empty cells
+            try:  # Necessary to avoid error on empty cells
                 cell_length = len(str(cell.value))
                 if str(cell.value).startswith("=HYPERLINK"):
                     cell_length = len(str(cell.value).rsplit(",")[-1].strip('"'))
@@ -49,8 +57,11 @@ def adjust_worksheet_columns_width(worksheet):
 
 
 def main():
-    folder = Path().joinpath("CTD_data_renamed")
-    out = Path().joinpath("CTD_data_renamed/mismatched_filenames/")
+    path_elements = ["Documents", "RBINS", "Onedrive", "CTD_testing"]
+    folder = Path().home().joinpath(*path_elements)
+    out = Path().home().joinpath(*path_elements).joinpath("mismatched_filenames")
+    if not out.exists():
+        out.mkdir()
 
     raw_folders = folder.rglob("raw_files")
     out_overview = out.parent.joinpath("overview.xlsx")
