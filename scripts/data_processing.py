@@ -277,10 +277,11 @@ def create_ctd_events(cruiseID,
     
     # Merge profiles with metadata
     ## Use the NMEA time and position (lat and long) as prefered source for these fields
+    ctd_events = pd.DataFrame() 
+    ctd_events_nopos = pd.DataFrame()
     if df_missingNMEA.sum() == 0:
         
         # Continue to build ctd_events dataframe from metadata in header
-        ctd_events = pd.DataFrame() 
         ctd_events['Deck_checks'] = df_NMEA['UTC Time']
         ctd_events['Cruise'] = cruiseID
         ctd_events['CTD number']  = df_NMEA['CTD number']
@@ -308,13 +309,11 @@ def create_ctd_events(cruiseID,
         else:
             print("No logsheet to merge additional cast metadata.")
         
-        ctd_events_nopos = None
         
     ## In the absence of the NMEA fields then use the logsheet metadata
     elif os.path.exists(logsheets) and (df_missingNMEA['Lat'] != 0 or df_missingNMEA['Long'] != 0):
         
         # Merge logsheet metadata in data frame ctd_log with date-times from header
-        ctd_events = pd.DataFrame()
         if df_missingNMEA['UTC Time'] == 0: 
             ctd_events['Deck_checks'] = df_NMEA['UTC Time']
         else:
@@ -330,14 +329,11 @@ def create_ctd_events(cruiseID,
         ctd_events['CTD_start'] = ctd_events['CTD_start'].dt.round('s')
         del ctd_events['Start']
 
-        ctd_events_nopos = None
-        
     ## In the absence of both NMEA and logsheets then take the system upload time (have to assume this is correctly synchronised with the ship's time) and get lat/long positions from the underway dataset
     else:
         print("ACTION *** No logsheet file or NMEA data in the HDR files. Lat/lon will need to be extracted from underway data streams for CTD date-times. ***")
             
         # Collate a list of the system time and add on time elapsed until the surface soak to approximate start of downcast for underway postion extraction of lat/lon 
-        ctd_events_nopos = pd.DataFrame()
         if len(systimelist)!=0:
             ctd_events_nopos['Deck_checks']  = df_NMEA['Upload Time']
         else:
@@ -348,7 +344,8 @@ def create_ctd_events(cruiseID,
         #join output from pumpdf based on CTD number
         if len(systimelist)!=0:
             ctd_events_nopos = ctd_events_nopos.merge(pumpdf, on='CTD number')
-            ctd_events_nopos['CTD_start'] = ctd_events_nopos['Deck_checks'] + pd.Timedelta(ctd_events_nopos['Start'], unit='S') # type: ignore 
+            ctd_events_nopos['CTD_start'] = ctd_events_nopos['Deck_checks'] + ctd_events_nopos['Start'] # type: ignore 
+            # ctd_events_nopos['CTD_start'] = ctd_events_nopos['Deck_checks'] + pd.Timedelta(ctd_events_nopos['Start'], unit='S') # type: ignore 
             ctd_events_nopos['CTD_start'] = ctd_events_nopos['CTD_start'].dt.round('S')
             del ctd_events_nopos['Start']
         else:
@@ -366,7 +363,12 @@ def create_ctd_events(cruiseID,
                                                                 'CTD_start'
                                                                 ])
         
-    return ctd_events
+    if not ctd_events.empty:
+        return ctd_events
+    elif not ctd_events_nopos.empty:
+        return ctd_events_nopos
+    else:
+        raise IOError("No ctd events can be returned.")
 
 #%%
 def create_output_csv_for_fisheries(df, output_directory):
