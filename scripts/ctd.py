@@ -96,7 +96,7 @@ class CTD_Data:
         all_bl = get_file_with_extension_from_list(all_files, ".bl")
         all_btl = get_file_with_extension_from_list(all_files, ".btl")
         all_ros = get_file_with_extension_from_list(all_files, ".ros")
-        all_cnv = get_file_with_extension_from_list(all_files, ".cnv")
+        all_cnv = get_file_with_extension_from_list(all_files, ".hex")
         self.hexfiles = all_hex
         self.blfiles = all_bl
         self.btlfiles = all_btl
