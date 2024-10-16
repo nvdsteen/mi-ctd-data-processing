@@ -27,7 +27,10 @@ def match_stem_caseinsensitive(
 ) -> str:
     pattern = re.compile(Path(filename).stem + f"{searched_extension}", re.IGNORECASE)
     files = [f for f in Path(search_path).rglob("*") if pattern.match(f.name)]
-    assert len(files) == 1
+    assert len(files) <= 1
+    if len(files) == 0:
+        return ""
+
     if return_full_path:
         return files[0].as_posix()
     return files[0].name
