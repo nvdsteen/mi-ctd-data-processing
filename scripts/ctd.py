@@ -108,7 +108,7 @@ class CTD_Data:
         self.df[['cast','file_type']] = self.df[0].str.split(".",expand=True)
 
         self.df['present'] = 1
-        if len(set(all_btl)) != len(all_btl):
+        if len(set([fi.lower() for fi in all_bl+all_btl])) != len(all_bl + all_btl):
             print("WARNING: duplicate btl files")
             self.df = self.df.drop_duplicates()
         self.df = self.df.pivot(index='cast', columns='file_type', values='present')
