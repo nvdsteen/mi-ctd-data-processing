@@ -67,21 +67,24 @@ def update_casts(group, widget_group, widget_casts, df):
     )
 
 
-def update_flag_widget(casts, widget, df, df_source):
+def update_flag_widget(casts, widget_group, widget_casts, widget_qc, df, df_source):
+    # casts_widget.observe(update_flag_widget, names="value")
+    # current_flag_value = df_profile.loc[df_profile["CASTS"].isin(casts_widget.value) and df_profile["group"] == group_widget.value, "QC_cast_flag"]
+    # qc_widget.value = list(QC_flags.keys())[list(QC_flags.values()).index(current_flag_value)][0]
     current_flag_value = df.loc[
-        df_source["CASTS"].isin(df_source.value) and df_source["group"] == widget.value,
+        df_source["CASTS"].isin(widget_casts.value) and df_source["group"] == widget_group.value,
         "QC_cast_flag",
     ]
-    widget.value = list(QC_flags.keys())[
+    widget_qc.value = list(QC_flags.keys())[
         list(QC_flags.values()).index(current_flag_value)
     ][0]
 
 
-def update_flag(flag, widget, df, df_source):
+def update_flag(flag, widget_group, widget_casts, widget_qc, df, df_source):
     df.loc[
-        (df_source["CASTS"].isin(widget.value)) & (df_source["group"] == flag.value),
+        (df_source["CASTS"].isin(widget_casts.value)) & (df_source["group"] == widget_group.value),
         "QC_cast_flag",
-    ] = QC_flags[widget.value]
+    ] = QC_flags[widget_qc.value]
 
 
 def display_flagging_widgets(df: pd.DataFrame, df_source: pd.DataFrame) -> None:
@@ -97,12 +100,12 @@ def display_flagging_widgets(df: pd.DataFrame, df_source: pd.DataFrame) -> None:
     )
     casts_widget.observe(
         lambda cast: update_flag_widget(
-            cast, widget=qc_widget, df=df, df_source=df_source
+            cast, widget_group=group_widget, widget_casts=casts_widget, widget_qc=qc_widget, df=df, df_source=df_source
         ),
         names="value",
     )
     qc_widget.observe(
-        lambda flag: update_flag(flag, widget=qc_widget, df=df, df_source=df_source),
+        lambda flag: update_flag(flag, widget_group=group_widget, widget_casts=casts_widget, widget_qc=qc_widget, df=df, df_source=df_source),
         names="value",
     )
 
