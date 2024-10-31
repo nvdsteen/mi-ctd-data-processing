@@ -62,7 +62,9 @@ def create_qc_widget() -> widgets.Dropdown:
 
 
 def update_casts(group, widget_group, widget_casts, df):
-    widget_casts.options = sorted(list(df.loc[df["group"] == widget_group.value, "CASTS"].unique()))
+    widget_casts.options = sorted(
+        list(df.loc[df["group"] == widget_group.value, "CASTS"].unique())
+    )
 
 
 def update_flag_widget(casts, widget, df, df_source):
@@ -82,32 +84,26 @@ def update_flag(flag, widget, df, df_source):
     ] = QC_flags[widget.value]
 
 
-# def display_group_widget(df: pd.DataFrame) -> None:
-#     group_widget = create_group_widget(df=df)
-#     group_widget.observe(lambda group: update_casts(group, df), names="value")
-#     display(group_widget)
-#
-# def display_casts_widget(df: pd.DataFrame, df_source: pd.DataFrame) -> None:
-#     casts_widget = create_casts_widget()
-#     casts_widget.observe(lambda cast: update_flag_widget(cast, df=df, df_source=df_source), names="value")
-#     display(casts_widget)
-#
-# def display_qc_widget(df: pd.DataFrame, df_source: pd.DataFrame) -> None:
-#     qc_widget = create_qc_widget()
-#     qc_widget.observe(lambda flag: update_flag(flag, df=df, df_source=df_source), names="value")
-#     display(qc_widget)
-#
 def display_flagging_widgets(df: pd.DataFrame, df_source: pd.DataFrame) -> None:
     group_widget = create_group_widget(df=df_source)
     casts_widget = create_casts_widget()
     qc_widget = create_qc_widget()
 
-    group_widget.observe(lambda group: update_casts(group, widget_group=group_widget, widget_casts=casts_widget, df=df_source), names="value")
+    group_widget.observe(
+        lambda group: update_casts(
+            group, widget_group=group_widget, widget_casts=casts_widget, df=df_source
+        ),
+        names="value",
+    )
     casts_widget.observe(
-        lambda cast: update_flag_widget(cast, widget=qc_widget, df=df, df_source=df_source), names="value"
+        lambda cast: update_flag_widget(
+            cast, widget=qc_widget, df=df, df_source=df_source
+        ),
+        names="value",
     )
     qc_widget.observe(
-        lambda flag: update_flag(flag, widget=qc_widget, df=df, df_source=df_source), names="value"
+        lambda flag: update_flag(flag, widget=qc_widget, df=df, df_source=df_source),
+        names="value",
     )
 
     display(group_widget, casts_widget, qc_widget)
