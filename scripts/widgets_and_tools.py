@@ -21,6 +21,10 @@ QC_flags = {
     #   "MIXED": None,
 }
 
+column_qc_flag = "QC_cast_flag"
+column_group = "group"
+column_casts = "CASTS"
+
 
 def get_common_pre_suf_fix(input_list, mode="prefix"):
     if mode == "suffix":
@@ -39,7 +43,9 @@ def strip_common_pre_and_suffix(input_list):
 
 
 # Multi-Select
-def create_group_widget(df: pd.DataFrame, key_group: str = "group") -> widgets.Select:
+def create_group_widget(
+    df: pd.DataFrame, key_group: str = column_group
+) -> widgets.Select:
     group_widget = widgets.Select(
         options=sorted(df[key_group].unique()),
         description="Group",
@@ -47,7 +53,7 @@ def create_group_widget(df: pd.DataFrame, key_group: str = "group") -> widgets.S
     return group_widget
 
 
-def create_casts_widget(init_options:list=[]) -> widgets.SelectMultiple:
+def create_casts_widget(init_options: list = []) -> widgets.SelectMultiple:
     casts_widget = widgets.SelectMultiple(
         description="Casts",
         options=init_options,
@@ -57,6 +63,7 @@ def create_casts_widget(init_options:list=[]) -> widgets.SelectMultiple:
 
 def create_qc_widget() -> widgets.Dropdown:
     qc_widget = widgets.Dropdown(
+        description="Flags",
         options=QC_flags.keys(),
     )
     return qc_widget
@@ -64,18 +71,15 @@ def create_qc_widget() -> widgets.Dropdown:
 
 def update_casts(group, widget_group, widget_casts, df):
     widget_casts.options = sorted(
-        list(df.loc[df["group"] == widget_group.value, "CASTS"].unique())
+        list(df.loc[df[column_group] == widget_group.value, column_casts].unique())
     )
 
 
 def update_flag_widget(casts, widget_group, widget_casts, widget_qc, df, df_source):
-    # casts_widget.observe(update_flag_widget, names="value")
-    # current_flag_value = df_profile.loc[df_profile["CASTS"].isin(casts_widget.value) and df_profile["group"] == group_widget.value, "QC_cast_flag"]
-    # qc_widget.value = list(QC_flags.keys())[list(QC_flags.values()).index(current_flag_value)][0]
     current_flag_value = df.loc[
-        df_source["CASTS"].isin(widget_casts.value)
-        and df_source["group"] == widget_group.value,
-        "QC_cast_flag",
+        df_source[column_casts].isin(widget_casts.value)
+        and df_source[column_group] == widget_group.value,
+        column_qc_flag,
     ]
     widget_qc.value = list(QC_flags.keys())[
         list(QC_flags.values()).index(current_flag_value)
@@ -84,9 +88,9 @@ def update_flag_widget(casts, widget_group, widget_casts, widget_qc, df, df_sour
 
 def update_flag(flag, widget_group, widget_casts, widget_qc, df, df_source, write_to):
     df.loc[
-        (df_source["CASTS"].isin(widget_casts.value))
-        & (df_source["group"] == widget_group.value),
-        "QC_cast_flag",
+        (df_source[column_casts].isin(widget_casts.value))
+        & (df_source[column_group] == widget_group.value),
+        column_qc_flag,
     ] = QC_flags[widget_qc.value]
     if write_to:
         df.to_csv(write_to, index=False)
@@ -95,9 +99,12 @@ def update_flag(flag, widget_group, widget_casts, widget_qc, df, df_source, writ
 def display_flagging_widgets(
     df: pd.DataFrame, df_source: pd.DataFrame, write_to: str | None = None
 ) -> None:
+    if write_to and column_qc_flag not in df_source.columns:
+        df[column_qc_flag] = 0
+        df.to_csv(write_to, index=False)
     group_widget = create_group_widget(df=df_source)
-    casts_widget = create_casts_widget(init_options=sorted(
-        list(df_source.loc[df_source["group"] == group_widget.value, "CASTS"].unique())))
+    init_options = sorted(list(df_source.loc[df_source[column_group] == group_widget.value, column_casts].unique()))  # type: ignore
+    casts_widget = create_casts_widget(init_options=init_options)
     qc_widget = create_qc_widget()
 
     group_widget.observe(
