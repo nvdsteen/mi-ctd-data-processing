@@ -47,9 +47,10 @@ def create_group_widget(df: pd.DataFrame, key_group: str = "group") -> widgets.S
     return group_widget
 
 
-def create_casts_widget() -> widgets.SelectMultiple:
+def create_casts_widget(init_options:list=[]) -> widgets.SelectMultiple:
     casts_widget = widgets.SelectMultiple(
         description="Casts",
+        options=init_options,
     )
     return casts_widget
 
@@ -72,7 +73,8 @@ def update_flag_widget(casts, widget_group, widget_casts, widget_qc, df, df_sour
     # current_flag_value = df_profile.loc[df_profile["CASTS"].isin(casts_widget.value) and df_profile["group"] == group_widget.value, "QC_cast_flag"]
     # qc_widget.value = list(QC_flags.keys())[list(QC_flags.values()).index(current_flag_value)][0]
     current_flag_value = df.loc[
-        df_source["CASTS"].isin(widget_casts.value) and df_source["group"] == widget_group.value,
+        df_source["CASTS"].isin(widget_casts.value)
+        and df_source["group"] == widget_group.value,
         "QC_cast_flag",
     ]
     widget_qc.value = list(QC_flags.keys())[
@@ -80,16 +82,22 @@ def update_flag_widget(casts, widget_group, widget_casts, widget_qc, df, df_sour
     ][0]
 
 
-def update_flag(flag, widget_group, widget_casts, widget_qc, df, df_source):
+def update_flag(flag, widget_group, widget_casts, widget_qc, df, df_source, write_to):
     df.loc[
-        (df_source["CASTS"].isin(widget_casts.value)) & (df_source["group"] == widget_group.value),
+        (df_source["CASTS"].isin(widget_casts.value))
+        & (df_source["group"] == widget_group.value),
         "QC_cast_flag",
     ] = QC_flags[widget_qc.value]
+    if write_to:
+        df.to_csv(write_to, index=False)
 
 
-def display_flagging_widgets(df: pd.DataFrame, df_source: pd.DataFrame) -> None:
+def display_flagging_widgets(
+    df: pd.DataFrame, df_source: pd.DataFrame, write_to: str | None = None
+) -> None:
     group_widget = create_group_widget(df=df_source)
-    casts_widget = create_casts_widget()
+    casts_widget = create_casts_widget(init_options=sorted(
+        list(df_source.loc[df_source["group"] == group_widget.value, "CASTS"].unique())))
     qc_widget = create_qc_widget()
 
     group_widget.observe(
@@ -100,12 +108,25 @@ def display_flagging_widgets(df: pd.DataFrame, df_source: pd.DataFrame) -> None:
     )
     casts_widget.observe(
         lambda cast: update_flag_widget(
-            cast, widget_group=group_widget, widget_casts=casts_widget, widget_qc=qc_widget, df=df, df_source=df_source
+            cast,
+            widget_group=group_widget,
+            widget_casts=casts_widget,
+            widget_qc=qc_widget,
+            df=df,
+            df_source=df_source,
         ),
         names="value",
     )
     qc_widget.observe(
-        lambda flag: update_flag(flag, widget_group=group_widget, widget_casts=casts_widget, widget_qc=qc_widget, df=df, df_source=df_source),
+        lambda flag: update_flag(
+            flag,
+            widget_group=group_widget,
+            widget_casts=casts_widget,
+            widget_qc=qc_widget,
+            df=df,
+            df_source=df_source,
+            write_to=write_to,
+        ),
         names="value",
     )
 
