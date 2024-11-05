@@ -6,7 +6,7 @@ from IPython.display import display
 
 QC_flags = {
     "NO_QUALITY_CONTROL": 0,
-    "GOOD": 1,
+    # "GOOD": 1,
     "PROBABLY_GOOD": 2,
     "PROBABLY_BAD": 3,
     #   "CHANGED": 5,
