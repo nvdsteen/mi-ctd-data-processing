@@ -85,7 +85,8 @@ def file_sensor_config(directory, file):
     """
     
     
-    config_xml = elementTree.parse(Path(directory).joinpath(match_stem_caseinsensitive(file, search_path=directory, searched_extension=".xmlcon")))
+    config_file = Path(directory).joinpath(match_stem_caseinsensitive(file, search_path=directory, searched_extension=".xmlcon"))
+    config_xml = elementTree.parse(config_file)
     config = config_xml.getroot()
     
     # Initialise dictionary to use to store sensor information
