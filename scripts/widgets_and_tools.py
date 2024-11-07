@@ -40,6 +40,9 @@ def get_common_pre_suf_fix(input_list, mode="prefix"):
 def strip_common_pre_and_suffix(input_list):
     prefix = get_common_pre_suf_fix(input_list, mode="prefix")
     suffix = get_common_pre_suf_fix(input_list, mode="suffix")
+    if "cast" in prefix.lower():
+        pattern = re.compile(r"\d{4}.\d{1,2}[A-Za-z]?[ _]?", re.IGNORECASE) 
+        prefix = pattern.match(prefix).group()
     out = [s.replace(prefix, "", 1).rsplit(suffix)[0] for s in input_list]
     return out
 
@@ -82,7 +85,7 @@ def update_flag_widget(casts, widget_group, widget_casts, widget_qc, df):
     current_flags = list(
         df.loc[
             (df[column_group] == widget_group.value)
-            & (df[column_casts].isin(widget_casts.value)),
+            & (df[column_casts+"TEST"].isin(widget_casts.value)),
             column_qc_flag,
         ].unique()
     )
@@ -119,15 +122,13 @@ def add_group_casts_columns_to_df(
     df[column_group] = df[column_group].str.split(r"(?i)CAST", n=1).str[0].str.strip()
 
     df[column_casts] = pd.Series(
-        strip_common_pre_and_suffix(list(df["profile"]))
-    ).str.split(r"(?i)CAST", n=1, expand=True)[1]
+        strip_common_pre_and_suffix(list(df["profile"]))).str.split(r"(?i)CAST", n=1, expand=True)[1]
 
     # df.loc[df[column_casts].isna(), column_casts] = df.loc[df[column_casts].isna(), column_group]
     df[column_casts] = df[column_casts].fillna(df[column_group])
 
     df[column_casts] = df[column_casts].str.strip()
 
-    print(f"{type(df)}")
     return df
 
 
