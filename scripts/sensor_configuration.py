@@ -9,6 +9,7 @@ from pathlib import Path
 import xml.etree.ElementTree as elementTree
 import pandas as pd 
 from IPython.display import display
+from .filename_matching import replace_extension, match_stem_caseinsensitive
 
 #%% 
 def get_sensor_coefficients(master_sensor_coeffs,
@@ -83,7 +84,9 @@ def file_sensor_config(directory, file):
         attached to each voltage channel
     """
     
-    config_xml = elementTree.parse(os.path.join(directory,file.upper().replace('.CNV','.XMLCON').replace('.BTL','.XMLCON')))
+    
+    config_file = Path(directory).joinpath(match_stem_caseinsensitive(file, search_path=directory, searched_extension=".xmlcon"))
+    config_xml = elementTree.parse(config_file)
     config = config_xml.getroot()
     
     # Initialise dictionary to use to store sensor information
@@ -155,6 +158,9 @@ def sensor_config(directory, cruiseID):
         else:
             master_labels[first] = '%s' % (first.replace(cruiseID.lower()+'_',''))
     
+    if df_cast_sensors.isnull().values.any():
+        print("WARNING: nan values in df_cast_sensors!")
+        df_cast_sensors = df_cast_sensors.fillna("NotInUse")
     return {'cast_sensors': df_cast_sensors, 
             'cast_labels': df_cast_sensors.drop_duplicates(keep='first').T.rename(columns=(master_labels))
             }

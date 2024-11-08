@@ -5,12 +5,14 @@ Created on Wed Mar 13 10:49:45 2024
 @author: dosullivan1
 """
 import os
+from pathlib import Path
 import pandas as pd
 import chevron
 from typing import Dict, List
 
 # Import bespoke functions
 import scripts.calculations as calculations
+from scripts.filename_matching import match_stem_caseinsensitive_lists, match_stem_caseinsensitive
 
 class CTD_Data:
     def __init__(self, 
@@ -86,12 +88,29 @@ class CTD_Data:
                 xmlCon = names[0]
                       
             
+        all_files = list(Path(rawFileDirectory).iterdir()) + list(Path(bottleFileDirectory).iterdir())
+        def get_file_with_extension_from_list(input_list: list[Path], extension: str) -> list[str]:
+            out = [fi.stem for fi in input_list if fi.suffix.lower() == extension]
+            return out
+        all_hex = get_file_with_extension_from_list(all_files, ".hex")
+        all_bl = get_file_with_extension_from_list(all_files, ".bl")
+        all_btl = get_file_with_extension_from_list(all_files, ".btl")
+        all_ros = get_file_with_extension_from_list(all_files, ".ros")
+        all_cnv = get_file_with_extension_from_list(all_files, ".hex")
+        self.hexfiles = all_hex
+        self.blfiles = all_bl
+        self.btlfiles = all_btl
+        self.rosfiles = all_ros
+        self.cnvfiles = all_cnv
         self.fileNameAndType = dict(zip(allFilesInDirectory,allFileTypesInDirectory))
         self.df_preprocessing = pd.DataFrame(allFilesInDirectory) 
         self.df = self.df_preprocessing
         self.df[['cast','file_type']] = self.df[0].str.split(".",expand=True)
 
         self.df['present'] = 1
+        if len(set([fi.lower() for fi in all_bl+all_btl])) != len(all_bl + all_btl):
+            print("WARNING: duplicate btl files")
+            self.df = self.df.drop_duplicates()
         self.df = self.df.pivot(index='cast', columns='file_type', values='present')
         self.df = self.df.fillna(0)
         
@@ -198,7 +217,35 @@ def generate_psa_files(sensor_counts,
     # Create dataset object to pass to template
     data = CTD_Data(raw, screen_2Hz, bottle, psa)
     # Repeating element of key value pairs to populate array items in psa file
-    
+    def generate_template_name_list(psa_name_suffix, match_list):
+        template_name_list = [
+                {
+                    "name": f'datcnv{psa_name_suffix}',
+                    "template": psaTemplate,
+                    "arrayItems": match_stem_caseinsensitive_lists(matching=match_list, input=data.hexfiles),
+                },
+                {
+                    "name": f'wildedit{psa_name_suffix}',
+                    "template": wildeditTemplate,
+                    "arrayItems": match_stem_caseinsensitive_lists(matching=match_list, input=data.cnvfiles),
+                },
+                {
+                    "name": f'cellTM{psa_name_suffix}',
+                    "template": celltmTemplate,
+                    "arrayItems": match_stem_caseinsensitive_lists(matching=match_list, input=data.cnvfiles),
+                },
+                {
+                    "name": f'binavg2Hz{psa_name_suffix}',
+                    "template": binavg2HzTemplate,
+                    "arrayItems": match_stem_caseinsensitive_lists(matching=match_list, input=data.cnvfiles),
+                },
+                {
+                    "name": f'filter{psa_name_suffix}',
+                    "template": filterTemplate,
+                    "arrayItems": match_stem_caseinsensitive_lists(matching=match_list, input=data.cnvfiles),
+                },
+            ]
+        return template_name_list
     # Logic to generate different PSA files
     if proc_mode == 0:
         input_arg = data.headerANDblPresent
@@ -207,18 +254,15 @@ def generate_psa_files(sensor_counts,
     if len(input_arg) > 0:
         data.MergeHeaderFile = 1
         data.CreateFile = 2
-        data.numberArrayItems = len(input_arg)
-        data.arrayItems = calculations.splitList(input_arg)
-        name='datcnv_headerANDblPresent.psa'
-        generateXml(psaTemplate, data, name)
-        name='wildedit_headerANDblPresent.psa'
-        generateXml(wildeditTemplate, data, name)
-        name='filter_headerANDblPresent.psa'
-        generateXml(filterTemplate, data, name)
-        name='cellTM_headerANDblPresent.psa'
-        generateXml(celltmTemplate, data, name)
-        name='binavg2Hz_headerANDblPresent.psa'
-        generateXml(binavg2HzTemplate, data, name)
+        psa_name_suffix = "_headerANDblPresent.psa"
+        
+        template_name_list = generate_template_name_list(psa_name_suffix, match_list=input_arg)
+        for i in template_name_list:
+            if len(i.get("arrayItems", [])) > 0:
+                data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.instrumentPath = match_stem_caseinsensitive(filename=i.get("arrayItems", "")[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
+                data.numberArrayItems = len(data.arrayItems)
+                generateXml(i.get("template"), data, i.get("name"))
         
     if proc_mode == 0:
         input_arg = data.headerANDblMissing
@@ -229,16 +273,16 @@ def generate_psa_files(sensor_counts,
         data.CreateFile = 0
         data.numberArrayItems = len(input_arg)
         data.arrayItems = calculations.splitList(input_arg)
-        name='datcnv_headerANDblMissing.psa'
-        generateXml(psaTemplate, data, name)
-        name='wildedit_headerANDblMissing.psa'
-        generateXml(wildeditTemplate, data, name)
-        name='filter_headerANDblMissing.psa'
-        generateXml(filterTemplate, data, name)
-        name='cellTM_headerANDblMissing.psa'
-        generateXml(celltmTemplate, data, name)
-        name='binavg2Hz_headerANDblMissing.psa'
-        generateXml(binavg2HzTemplate, data, name)
+        psa_name_suffix = "_headerANDblMissing.psa"
+        
+        template_name_list = generate_template_name_list(psa_name_suffix, match_list=input_arg)
+        for i in template_name_list:
+            if len(i.get("arrayItems", [])) > 0:
+                data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.instrumentPath = match_stem_caseinsensitive(filename=i.get("arrayItems", "")[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
+                data.numberArrayItems = len(data.arrayItems)
+                generateXml(i.get("template"), data, i.get("name"))
+
         
     if proc_mode == 0:
         input_arg = data.headerMissing
@@ -248,19 +292,19 @@ def generate_psa_files(sensor_counts,
         data.MergeHeaderFile = 0 # type: ignore
         data.CreateFile = 2
         #data.arrayItems = dict2array(data.headerMissing)
-        data.numberArrayItems = len(input_arg)
         data.arrayItems = calculations.splitList(input_arg)
-        name='datcnv_headerMissing.psa'
-        generateXml(psaTemplate, data, name)
-        name='wildedit_headerMissing.psa'
-        generateXml(wildeditTemplate, data, name)
-        name='filter_headerMissing.psa'
-        generateXml(filterTemplate, data, name)
-        name='cellTM_headerMissing.psa'
-        generateXml(celltmTemplate, data, name)
-        name='binavg2Hz_headerMissing.psa'
-        generateXml(binavg2HzTemplate, data, name)
+        data.instrumentPath = match_stem_caseinsensitive(filename=input_arg[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
+        data.numberArrayItems = len(input_arg)
+        psa_name_suffix = "_headerMissing.psa"
         
+        template_name_list = generate_template_name_list(psa_name_suffix, match_list=input_arg)
+        for i in template_name_list:
+            if len(i.get("arrayItems", [])) > 0:
+                data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.instrumentPath = match_stem_caseinsensitive(filename=i.get("arrayItems", "")[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
+                data.numberArrayItems = len(data.arrayItems)
+                generateXml(i.get("template"), data, i.get("name"))
+
     if proc_mode == 0:
         input_arg = data.blMissing
     elif proc_mode == 1:
@@ -268,19 +312,19 @@ def generate_psa_files(sensor_counts,
     if len(input_arg) > 0:
         data.MergeHeaderFile = 1
         data.CreateFile = 0
-        data.numberArrayItems = len(input_arg)
+        data.instrumentPath = match_stem_caseinsensitive(filename=input_arg[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
         data.arrayItems = calculations.splitList(input_arg)
-        name='datcnv_blMissing.psa'
-        generateXml(psaTemplate, data, name)
-        name='wildedit_blMissing.psa'
-        generateXml(wildeditTemplate, data, name)
-        name='filter_blMissing.psa'
-        generateXml(filterTemplate, data, name)
-        name='cellTM_blMissing.psa'
-        generateXml(celltmTemplate, data, name)
-        name='binavg2Hz_blMissing.psa'
-        generateXml(binavg2HzTemplate, data, name)
+        data.numberArrayItems = len(input_arg)
+        psa_name_suffix = "_blMissing.psa"
         
+        template_name_list = generate_template_name_list(psa_name_suffix, match_list=input_arg)
+        for i in template_name_list:
+            if len(i.get("arrayItems", [])) > 0:
+                data.arrayItems = calculations.splitList(i.get("arrayItems"))
+                data.instrumentPath = match_stem_caseinsensitive(filename=i.get("arrayItems", "")[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
+                data.numberArrayItems = len(data.arrayItems)
+                generateXml(i.get("template"), data, i.get("name"))
+                
     ### Modified 06/07/21 to account for cruises without Btl files ###
     btl_files = data.blPresent
     for file in data.hexMissing:
@@ -298,9 +342,10 @@ def generate_psa_files(sensor_counts,
     elif proc_mode == 1:
         input_arg = [x for x in data.blPresent if x not in data.btlPresent] 
     if len(input_arg) > 0:
-        data.numberArrayItems = len(input_arg) # type: ignore
         #print(data.numberArrayItems)
-        data.arrayItems = calculations.splitList(input_arg) # type: ignore
+        data.instrumentPath = match_stem_caseinsensitive(filename=input_arg[0], search_path=raw, searched_extension=".XMLCON", return_full_path=True)
+        data.arrayItems = calculations.splitList(data.rosfiles) # type: ignore
+        data.numberArrayItems = len(data.arrayItems)
         name='MI_botsum.psa'
         generateXml(botTemplate, data, name)    
            
