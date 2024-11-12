@@ -85,7 +85,7 @@ def update_flag_widget(casts, widget_group, widget_casts, widget_qc, df):
     current_flags = list(
         df.loc[
             (df[column_group] == widget_group.value)
-            & (df[column_casts+"TEST"].isin(widget_casts.value)),
+            & (df[column_casts].isin(widget_casts.value)),
             column_qc_flag,
         ].unique()
     )
