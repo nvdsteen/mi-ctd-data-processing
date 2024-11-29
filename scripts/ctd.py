@@ -88,14 +88,16 @@ class CTD_Data:
                 xmlCon = names[0]
                       
             
-        all_files = list(Path(rawFileDirectory).iterdir()) + list(Path(bottleFileDirectory).iterdir())
+        raw_files = list(Path(rawFileDirectory).iterdir())
+        bottle_dir_files = list(Path(bottleFileDirectory).iterdir())
+        all_files = raw_files + bottle_dir_files
         def get_file_with_extension_from_list(input_list: list[Path], extension: str) -> list[str]:
             out = [fi.stem for fi in input_list if fi.suffix.lower() == extension]
             return out
         all_hex = get_file_with_extension_from_list(all_files, ".hex")
         all_bl = get_file_with_extension_from_list(all_files, ".bl")
         all_btl = get_file_with_extension_from_list(all_files, ".btl")
-        all_ros = get_file_with_extension_from_list(all_files, ".ros")
+        all_ros = get_file_with_extension_from_list(all_files, ".ros") + get_file_with_extension_from_list(raw_files, ".bl")
         all_cnv = get_file_with_extension_from_list(all_files, ".hex")
         self.hexfiles = all_hex
         self.blfiles = all_bl
