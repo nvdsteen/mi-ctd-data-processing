@@ -121,8 +121,12 @@ def add_group_casts_columns_to_df(
     df[column_group] = strip_common_pre_and_suffix(list(df[base_column]))
     df[column_group] = df[column_group].str.split(r"(?i)CAST", n=1).str[0].str.strip()
 
-    df[column_casts] = pd.Series(
-        strip_common_pre_and_suffix(list(df["profile"]))).str.split(r"(?i)CAST", n=1, expand=True)[1]
+    try:
+        df[column_casts] = pd.Series(
+            strip_common_pre_and_suffix(list(df["profile"]))).str.split(r"(?i)CAST", n=1, expand=True)[1]
+    except KeyError:
+        df[column_group] = "NO GROUPS"
+        df[column_casts] = strip_common_pre_and_suffix(list(df[base_column]))
 
     # df.loc[df[column_casts].isna(), column_casts] = df.loc[df[column_casts].isna(), column_group]
     df[column_casts] = df[column_casts].fillna(df[column_group])
