@@ -58,6 +58,10 @@ class bokeh_layout:
             self.profile_list = []
         self.param_list = self.profile_data.columns.tolist()
 
+        key_turbidity = "TurbidityMeter_0"
+        if key_turbidity not in profile_data.columns:
+            self.profile_data[key_turbidity] = float("nan")
+
         # Define widgets
         # Profile allows users to select the profile they want to view
         self.profile = Select(options=self.profile_list, value=self.profile_list[0])
