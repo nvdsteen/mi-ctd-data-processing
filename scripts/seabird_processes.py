@@ -119,7 +119,6 @@ def bin_data(input_df, cast, zcord, profile_id, params_out, bin_width=1.):
     bin_df = bin_df.drop(columns=[zcord]).rename(columns={'bin': zcord})
     
     bin_df = bin_df[params_out].rename(columns={'bin': zcord})
-    bin_df = bin_df.dropna(axis=1, how='all')
-    bin_df = bin_df.dropna()
+    bin_df = bin_df.dropna(subset=bin_df.columns.difference(["CTD_number, depSM"]), how="all")
     return bin_df
 
